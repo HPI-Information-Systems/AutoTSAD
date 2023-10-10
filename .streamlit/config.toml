@@ -1,0 +1,10 @@
+[server]
+
+port = 8501
+folderWatchBlacklist = [
+    "db", "data", "notebooks", "scripts", "tmp", "paper-plots", "results"
+]
+
+[browser]
+
+gatherUsageStats = false

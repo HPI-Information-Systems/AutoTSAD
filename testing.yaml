@@ -1,0 +1,115 @@
+general:
+  tmp_path: tmp
+  result_path: tmp
+  logging_level: 0
+  timer_logging_level: 20
+  progress: on
+  use_timer: yes
+  seed: 2
+  max_algorithm_instances: 6
+  algorithm_selection_method: aggregated-minimum-influence
+  score_normalization_method: minmax
+  score_aggregation_method: custom
+  plot_final_scores: yes
+  compute_all_combinations: yes
+  training_timeout_s: 300
+  testing_timeout_s: 3600
+  memory_limit_mb: 1024
+  pynisher_resource_enforcer: off
+  n_jobs: 2
+#  TRAINING_TIMESERIES_LENGTH:
+#  TRAINING_TIMESERIES_MIN_NO_PERIODS:
+
+data_gen:
+  autoperiod_max_periods: 4
+  snippets_max_no: 5
+  regime_max_sampling_number: 2
+#  regime_max_sampling_overlap:
+  #anom_filter_scoring_threshold_percentile:
+  #anom_filter_voting_threshold:
+  enable_regime_overlap_pruning: on
+  enable_dataset_pruning: on
+  #AUTOPERIOD_MAX_PERIOD_LENGTH:
+  #SNIPPETS_DIST_WINDOW_SIZE_PERCENTAGE:
+  #SNIPPETS_PROFILE_AREA_CHANGE_THRESHOLD:
+  #REGIME_STRONG_PERCENTAGE:
+  #REGIME_CONSOLIDATION_PERCENTAGE:
+  #REGIME_MIN_PERIODS_PER_SLICE_FOR_VALID_SNIPPET:
+  #REGIME_OVERLAP_PRUNING_THRESHOLD:
+  #DATASET_PRUNING_SIMILARITY_THRESHOLD:
+  #ANOM_FILTER_BAD_SCORING_MEAN_LIMIT:
+  #ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE:
+
+data_gen_plotting:
+  autoperiod: off
+  profile_area: off
+  subsequence_sampling: off
+  snippets: off
+  snippet_regimes: off
+  snippet_profiles: off
+  regime_overlap_pruning: off
+  base_ts: off
+  cleaning_algo_scores: off
+  cutouts: off
+  truncated_timeseries: off
+  injected_anomaly: off
+
+consolidation:
+  param_selection_strategy: threshold
+  #param_selection_best_quality_epsilon:
+  param_selection_quality_threshold: 0.95
+  #dataset_similarity_threshold:
+  #dataset_selection_strategy:
+  plot: off
+
+anomaly:
+  #contamination_threshold:
+  possible_anomaly_lengths:
+    - 50
+    - 100
+  possible_anomaly_length_period_factors:
+    - 1.0
+    - 1.5
+  #maximum_anomaly_length_fraction:
+  #find_position_max_retries:
+  #anomaly_section_probas:
+  allowed_anomaly_types:
+    - outlier
+    - compress
+    - noise
+    - smoothing
+    - hmirror
+    - scale
+  same_anomalies_for_all_base_ts: yes
+  #generate_multiple_same:
+  #generate_multiple_different:
+  #number_of_anomalies_per_dataset:
+  #number_of_different_anomalies:
+  #skip_dataset_less_than_desired_anomalies:
+  #skip_dataset_over_contamination_threshold:
+
+optimization:
+  optuna_storage_type: sqlite
+  optuna_storage_cleanup: no
+  optuna_dashboard: no
+  #optuna_logging_level:
+  n_trials_startup: 100
+  n_trials_sensitivity: 20
+  n_trials_step: 20
+  max_trails_per_study: 20
+  #stop_heuristic_quality_threshold:
+  stop_heuristic_n: 10
+  stop_heuristic_optuna: no
+  metric_name: "RangePrAUC"
+  algorithms:
+    - subsequence_lof
+#    - subsequence_knn
+#    - subsequence_if
+#    - stomp
+    - kmeans
+    - torsk
+#    - dwt_mlead
+#    - grammarviz
+  proxy_allowed_quality_deviation: 0.05
+  reintroduce_default_params: yes
+  disabled: yes
