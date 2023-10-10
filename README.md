@@ -2,6 +2,12 @@
 
 Time series anomaly detection system that uses best-in-class base anomaly detectors to detect subsequence and point anomalies in time series with differing characteristics.
 
+## Datasets
+
+The folder [`data`](./data) contains the time series used to evaluate AutoTSAD.
+
+## Results
+
 ## Requirements
 
 - python >= 3.8

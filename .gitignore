@@ -1,6 +1,3 @@
-/data
-/results
-/results-*
 tmp*
 timeeval_experiments/results
 **/*.log

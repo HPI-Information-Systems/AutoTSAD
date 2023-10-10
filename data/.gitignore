@@ -1,0 +1,4 @@
+# Ignore the following datasets because we are not allowed to share them.
+# Please ask the original authors to also share them with you.
+timeeval/IOPS
+timeeval/WebscopeS5
