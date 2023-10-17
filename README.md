@@ -1,5 +1,5 @@
 <div align="center">
-<img width="100px" src="https://github.com/HPI-Information-Systems/AutoTSAD/raw/main/autotsad-icon.png" alt="AutoTSAD logo"/>
+<img width="100px" src="https://github.com/HPI-Information-Systems/AutoTSAD/raw/main/autotsad-logo.png" alt="AutoTSAD logo"/>
 <h1 align="center">AutoTSAD</h1>
 <p>
 Unsupervised Anomaly Detection System for Univariate Time Series.
