@@ -57,7 +57,38 @@ The score ranking can interactively be explored and altered.
 
 ## Results
 
-tbd
+We compare the anomaly detection quality of AutoTSAD with three to four baselines on all 106 univariate time series in the [`data`](./data)-folder.
+The baseline algorithms are the following:
+
+- **Oracle**: Perfect selection algorithm that _magically_ selects the best performing algorithm for every time series from the 71 [TimeEval-algorithms](https://github.com/HPI-Information-Systems/timeeval-algorithms) based on the Range-PR-AUC metric.
+- **Random Algorithm**: Mean quality of the 71 TimeEval-algorithms for each time series.
+  We computed the results only for the Range-PR-AUC and Range-ROC-AUC metrics.
+- **k-Means**: Individual time series anomaly detection algorithm, which achieved overall best results.
+- **SAND**: Individual time series anomaly detection algorithm, which is particularly specialized for time series with different base behaviors and shifting anomalies.
+
+For all baseline algorithms and AutoTSAD, we use the [manually-tuned hyperparameter heuristics from TimeEval](https://github.com/HPI-Information-Systems/TimeEval/blob/main/timeeval_experiments/param-config.json).
+
+### Range-PR-AUC Metric
+
+![Detection quality comparison using Range-PR-AUC metric](docs/figures/quality-range-pr-auc.png)
+
+### Other metrics
+
+<div style="width: 100%; overflow: hidden;">
+  <div style="width: 49%; float: left;">
+
+  ![Detection quality comparison using Range-ROC-AUC metric](docs/figures/quality-range-roc-auc.png)
+  ![Detection quality comparison using Range-PR-VUS metric](docs/figures/quality-range-pr-vus.png)
+
+  </div>
+  <div style="margin-left: 51%;">
+
+  ![Detection quality comparison using Range-ROC-VUS metric](docs/figures/quality-range-roc-vus.png)
+  ![Detection quality comparison using ROC-AUC metric](docs/figures/quality-roc-auc.png)
+
+  </div>
+</div>
+
 
 ## Installation
 
