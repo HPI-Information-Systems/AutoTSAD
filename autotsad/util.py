@@ -160,7 +160,7 @@ def format_time_ns(time: float) -> str:
     return format_time(time, is_ns=True)
 
 
-def format_time(time: float, is_ns: bool = False) -> str:
+def format_time(time: float, is_ns: bool = False, precision: int = 3) -> str:
     """Format a time in seconds or nanoseconds to a human-readable string (using ms, s, min, and h).
 
     Parameters
@@ -169,6 +169,8 @@ def format_time(time: float, is_ns: bool = False) -> str:
         Time in seconds
     is_ns : bool, optional
         Whether the time is in nanoseconds.
+    precision : int, optional
+        Number of decimals to use in the output.
 
     Returns
     -------
@@ -198,7 +200,7 @@ def format_time(time: float, is_ns: bool = False) -> str:
             suffix_index += 1
             time /= 24
 
-    return f"{time:.3f} {suffixes[suffix_index]}"
+    return f"{time:.{precision}f} {suffixes[suffix_index]}"
 
 
 _T = TypeVar("_T")

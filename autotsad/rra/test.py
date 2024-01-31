@@ -1,6 +1,6 @@
 import numpy as np
 
-from .rank_aggregation import _get_reliability, borda, trimmed_partial_borda
+from .borda import _get_reliability, borda, trimmed_partial_borda
 
 
 if __name__ == '__main__':

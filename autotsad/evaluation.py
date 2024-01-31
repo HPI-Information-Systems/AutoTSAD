@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Tuple
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, euclidean_distances
@@ -8,6 +9,8 @@ from timeeval import Metric
 from timeeval.metrics import RangePrecision, RangeRecall, RangeFScore, RangePrAUC, RangeRocAUC, PrecisionAtK
 from timeeval.metrics.thresholding import ThresholdingStrategy, PercentileThresholding, SigmaThresholding, \
     TopKRangesThresholding
+from timeeval.utils.tqdm_joblib import tqdm_joblib
+from tqdm import tqdm
 
 from .config import METRIC_MAPPING
 from .dataset import TestDataset
@@ -153,16 +156,22 @@ def compute_metrics_old(labels: np.ndarray, scores: np.ndarray,
     return results
 
 
-def compute_metrics(y_label: np.ndarray, y_score: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+def compute_metrics(y_label: np.ndarray, y_score: np.ndarray, y_pred: np.ndarray, n_jobs: int = 1) -> Dict[str, float]:
     y_pred = y_pred.astype(np.int_)
-    results = {}
-    for metric_name in METRIC_MAPPING:
+
+    def _compute(metric_name: str) -> Tuple[str, float]:
         metric: Metric = METRIC_MAPPING[metric_name]
         if metric.supports_continuous_scorings():
-            results[metric_name] = metric(y_label, y_score)
+            score = metric(y_label, y_score)
         else:
-            results[metric_name] = metric(y_label, y_pred)
+            score = metric(y_label, y_pred)
+        return metric_name, score
 
+    with tqdm_joblib(tqdm(desc="Computing metrics", total=len(METRIC_MAPPING))):
+        results = joblib.Parallel(n_jobs=n_jobs)(
+            joblib.delayed(_compute)(metric_name) for metric_name in METRIC_MAPPING
+        )
+    results = dict(results)
     return results
 
 

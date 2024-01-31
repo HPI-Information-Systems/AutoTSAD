@@ -13,7 +13,7 @@ from sqlalchemy.exc import OperationalError
 from timeeval.utils.hash_dict import hash_dict
 
 from .database import Database
-from ..config import ALGORITHM_SELECTION_METHODS, SCORE_NORMALIZATION_METHODS, SCORE_AGGREGATION_METHODS
+from ..config import ALGORITHM_SELECTION_METHODS, SCORE_NORMALIZATION_METHODS, SCORE_AGGREGATION_METHODS, METRIC_MAPPING
 from ..dataset import TestDataset
 from ..evaluation import evaluate_result
 from ..system.execution.algo_selection import select_algorithm_instances
@@ -131,7 +131,10 @@ def _load_metrics(tmpdir: Path) -> pd.DataFrame:
         raise ValueError(f"Expected exactly one metric file, none found at {metrics_path}!")
     df = pd.read_csv(metrics_path, index_col=0)
     df.index.name = "name"
-    return df.reset_index()
+    df = df.reset_index()
+    columns = list(set().union(df.columns, METRIC_MAPPING.keys()))
+    df = df.reindex(columns=columns, fill_value=np.nan)
+    return df
 
 
 def _calculate_runtime(tmpdir: Path) -> Optional[int]:
@@ -302,11 +305,19 @@ def _process_ranking_method(selection_m: str, normalization_m: str, aggregation_
             "normalization_method": normalization_m,
             "aggregation_method": aggregation_m,
             "runtime": None if runtime is None else runtime / 1e9,  # convert to seconds
+            "pr_auc": method_metrics["PrAUC"],
+            "roc_auc": method_metrics["RocAUC"],
             "range_pr_auc": method_metrics["RangePrAUC"],
             "range_roc_auc": method_metrics["RangeRocAUC"],
+            "range_pr_vus": method_metrics["RangePrVUS"],
+            "range_roc_vus": method_metrics["RangeRocVUS"],
+            "range_precision": method_metrics["RangePrecision"],
+            "range_recall": method_metrics["RangeRecall"],
+            "range_fscore": method_metrics["RangeFScore"],
             "precision_at_k": method_metrics["PrecisionAtK"],
-            "precision": method_metrics["RangePrecision"],
-            "recall": method_metrics["RangeRecall"],
+            "precision": method_metrics["Precision"],
+            "recall": method_metrics["Recall"],
+            "fscore": method_metrics["FScore"],
         },
         max_retries=3
     )
@@ -320,7 +331,8 @@ def load_result_backup(db: Database,
                        timestamp: Optional[str] = None,
                        selection_methods: List[str] = ["all"],
                        normalization_methods: List[str] = ["all"],
-                       aggregation_methods: List[str] = ["all"]) -> None:
+                       aggregation_methods: List[str] = ["all"],
+                       skip_existing_experiments: bool = False) -> None:
     path = Path(result_backup_path).resolve()
     if not path.exists() or not path.is_file():
         raise ValueError(f"Path to the result backup ({path}) is invalid!")
@@ -354,7 +366,10 @@ def load_result_backup(db: Database,
     with db.begin() as conn:
         res = conn.execute(
             select(db.experiment_table.c.id).where(db.experiment_table.c.name == experiment_name)).first()
-        if res:
+        if res and skip_existing_experiments:
+            print(f"Experiment already exists in the database! Skipping!")
+            return
+        elif res and not skip_existing_experiments:
             experiment_id = res[0]
             print(f"Experiment already exists in the database! Using experiment ID {experiment_id}")
         else:
@@ -529,11 +544,19 @@ def load_result_backup(db: Database,
                         "normalization_method": s["normalization-method"],
                         "aggregation_method": s["aggregation-method"],
                         "runtime": None if runtime is None else runtime / 1e9,  # convert to seconds
+                        "pr_auc": s["PrAUC"],
+                        "roc_auc": s["RocAUC"],
                         "range_pr_auc": s["RangePrAUC"],
                         "range_roc_auc": s["RangeRocAUC"],
+                        "range_pr_vus": s["RangePrVUS"],
+                        "range_roc_vus": s["RangeRocVUS"],
+                        "range_precision": s["RangePrecision"],
+                        "range_recall": s["RangeRecall"],
+                        "range_fscore": s["RangeFScore"],
                         "precision_at_k": s["PrecisionAtK"],
-                        "precision": s["RangePrecision"],
-                        "recall": s["RangeRecall"],
+                        "precision": s["Precision"],
+                        "recall": s["Recall"],
+                        "fscore": s["FScore"],
                     },
                     max_retries=3
                 )

@@ -55,6 +55,9 @@ def register_db_arguments(parser: argparse.ArgumentParser) -> None:
                                                 help="Path to the folder containing the result backup files (tar.gz) !")
     parser_load_all_result_backups.add_argument("--experiment-description", type=str,
                                                 help="Description used for all experiments.")
+    parser_load_all_result_backups.add_argument("--skip-existing", action="store_true",
+                                                help="Skip experiments, whose name already exists in the database."
+                                                     "Otherwise, the experiment is overwritten.")
 
     parser_delete_experiment = subparsers.add_parser("delete-experiment",
                                                      help="Delete all results of an experiment from the database. "
@@ -62,6 +65,17 @@ def register_db_arguments(parser: argparse.ArgumentParser) -> None:
                                                           "specified.")
     parser_delete_experiment.add_argument("--experiment-name", type=str, help="Name of the experiment to delete.")
     parser_delete_experiment.add_argument("--experiment-id", type=int, help="ID of the experiment to delete.")
+
+    parser_load_baselines = subparsers.add_parser("load-baseline-results",
+                                                  help="Load baseline results from a result folder into the database.")
+    parser_load_baselines.add_argument("result_folder", type=Path,
+                                       help="Path to the folder containing the baseline result folders. Naming scheme: "
+                                            "`<baseline-name>-<dataset_id>-<parameters>`.")
+    parser_load_baselines.add_argument("--name", type=str, help="Name of the baseline. Overwrites the "
+                                                                "name in the folder name.")
+    parser_load_baselines.add_argument("--skip-existing", action="store_true",
+                                       help="Skip baseline executions, whose name-dataset combination already exists "
+                                            "in the database. Otherwise, the results are overwritten.")
 
 
 def main(args: argparse.Namespace) -> None:
@@ -101,5 +115,11 @@ def main(args: argparse.Namespace) -> None:
         from .delete_experiment_results import delete_experiment_results
         delete_experiment_results(db, experiment_id=args.experiment_id, name=args.experiment_name)
 
+    elif command == "load-baseline-results":
+        from .load_baseline_results import load_baseline_results
+        with joblib.parallel_backend("loky", n_jobs=args.n_jobs):
+            load_baseline_results(db, args.result_folder,
+                                  baseline_name=args.name,
+                                  skip_existing_experiments=args.skip_existing)
     else:
         raise ValueError(f"Unknown DB command: {command}")

@@ -39,8 +39,6 @@ class Database:
     autotsad_execution_table_meta = {"name": "autotsad_execution", "schema": schema}
     baseline_execution_table_meta = {"name": "baseline_execution", "schema": schema}
     runtime_trace_table_meta = {"name": "runtime_trace", "schema": schema}
-    aggregated_scoring_table_meta = {"name": "aggregated_scoring", "schema": schema}
-    aggregated_scoring_scores_table_meta = {"name": "aggregated_scoring_scores", "schema": schema}
 
     @staticmethod
     def create_engine(url: str, isolation_level: str = "SERIALIZABLE") -> Engine:
@@ -67,8 +65,6 @@ class Database:
         self.autotsad_execution_table = Table("autotsad_execution", metadata_obj, autoload_with=self.engine, schema=self.schema)
         self.baseline_execution_table = Table("baseline_execution", metadata_obj, autoload_with=self.engine, schema=self.schema)
         self.runtime_trace_table = Table("runtime_trace", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.aggregated_scoring_table = Table("aggregated_scoring", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.aggregated_scoring_scores_table = Table("aggregated_scoring_scores", metadata_obj, autoload_with=self.engine, schema=self.schema)
 
     def begin(self) -> Iterator[Connection]:
         return self.engine.begin()

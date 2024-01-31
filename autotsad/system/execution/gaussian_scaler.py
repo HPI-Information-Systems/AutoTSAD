@@ -5,7 +5,6 @@ import numpy as np
 from scipy import sparse
 from scipy.special import erf, erfinv
 from sklearn.base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.utils.validation import check_is_fitted, FLOAT_DTYPES, check_array
 
 
@@ -121,7 +120,7 @@ class GaussianScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             raise ValueError(f"Unknown regularization method '{self.regularize}'!")
 
         if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does not support sparse input.")
+            raise TypeError("GaussianScaler does not support sparse input.")
 
         X = self._validate_data(
             X,
@@ -132,6 +131,7 @@ class GaussianScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         # for regularization
         self.max_ = np.max(X, axis=0)
+        self.min_ = np.min(X, axis=0)
         if self.base_scores is not None:
             if self.base_scores.shape[0] != X.shape[1]:
                 raise ValueError(
@@ -146,9 +146,23 @@ class GaussianScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             self.base_scores_ = np.median(X, axis=0)
 
+        norm_mask = np.logical_and(self.min_ == 0, self.max_ > 1)
+        if np.any(norm_mask):
+            warnings.warn(
+                "(fit) Some values are not in the range [0, 1]. "
+                "Normalizing these values to [0, 1]."
+            )
+            X[:, norm_mask] = X[:, norm_mask] / self.max_[norm_mask]
+
         # for gaussian scaling
         self.mean_ = np.mean(X, axis=0)
         self.std_ = np.std(X, axis=0)
+        if np.any(self.std_ == 0.):
+            warnings.warn(
+                "(fit) Some features have a standard deviation of 0. "
+                "Setting these features to 1e-12."
+            )
+            self.std_[self.std_ == 0.] = 1e-12
         return self
 
     def transform(self, X):
@@ -176,6 +190,14 @@ class GaussianScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if self.regularize is not None:
             X = self._regularize(X)
+
+        norm_mask = np.logical_and(self.min_ == 0, self.max_ > 1)
+        if np.any(norm_mask):
+            warnings.warn(
+                "(transform) Some values are not in the range [0, 1]. "
+                "Normalizing these values to [0, 1]."
+            )
+            X[:, norm_mask] = X[:, norm_mask] / self.max_[norm_mask]
 
         X = erf((X - self.mean_) / (self.std_ * np.sqrt(2)))
         X[X < 0] = 0
@@ -205,6 +227,10 @@ class GaussianScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             raise ValueError("Inverse transform is not possible with regularization!")
 
         X = erfinv(X) * self.std_ * np.sqrt(2) + self.mean_
+
+        norm_mask = np.logical_and(self.min_ == 0, self.max_ > 1)
+        if np.any(norm_mask):
+            X[:, norm_mask] = X[:, norm_mask] * self.max_[norm_mask]
         return X
 
 
@@ -212,9 +238,7 @@ if __name__ == '__main__':
     X = np.random.rand(10).reshape(-1, 1)*2+0.5
     Y = np.random.rand(10).reshape(-1, 1)*2+0.9
 
-    # scaler = GaussianScaler()
-    # scaler = StandardScaler()
-    scaler = MinMaxScaler(clip=True)
+    scaler = GaussianScaler()
     X = scaler.fit_transform(X)
     print(X)
     Y_hat = scaler.transform(Y)

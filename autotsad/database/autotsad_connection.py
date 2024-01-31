@@ -6,9 +6,25 @@ from streamlit import cache_data
 from streamlit.connections import ExperimentalBaseConnection
 
 from .database import Database
+from ..system.execution.aggregation import normalize_scores, aggregate_scores
 
 AUTOTSAD_SUPER_ENSEMBLES = ("aggregated-minimum-influence", "aggregated-robust-borda")
 AUTOTSAD_SUPER_ENSEMBLES_SQL = ','.join(f"'{m}'" for m in AUTOTSAD_SUPER_ENSEMBLES)
+DB_METRIC_NAME_MAPPING = {
+    "PrAUC": "pr_auc",
+    "RocAUC": "roc_auc",
+    "RangePrAUC": "range_pr_auc",
+    "RangeRocAUC": "range_roc_auc",
+    "RangePrVUS": "range_pr_vus",
+    "RangeRocVUS": "range_roc_vus",
+    "PrecisionAtK": "precision_at_k",
+    "Precision": "precision",
+    "Recall": "recall",
+    "FScore": "fscore",
+    "RangePrecision": "range_precision",
+    "RangeRecall": "range_recall",
+    "RangeFScore": "range_fscore",
+}
 
 
 def _if_filter(filters: Dict[str, List[Any]], name: str) -> Generator[List[Any], None, None]:
@@ -28,6 +44,61 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             url = self._secrets["url"]
         return Database(url)
 
+    def _resolve_method_type(self, method: str, conn: Connection) -> str:
+        res = conn.execute(select(self._instance.autotsad_execution_table.c.ranking_method)
+                           .where(self._instance.autotsad_execution_table.c.ranking_method == method)
+                           ).first()
+        if method in AUTOTSAD_SUPER_ENSEMBLES:
+            return "AutoTSAD Ensemble"
+        elif res and len(res) > 0:
+            return "AutoTSAD"
+        else:
+            return "Baseline"
+
+    def _add_autotsad_filters(self, query: Select, filters: Dict[str, List[Any]]) -> Select:
+        for autotsad_versions in _if_filter(filters, "autotsad_version"):
+            query = query.where(self._instance.autotsad_execution_table.c.autotsad_version.in_(autotsad_versions))
+        for config_ids in _if_filter(filters, "config_id"):
+            query = query.where(self._instance.autotsad_execution_table.c.config_id.in_(config_ids))
+        for experiment_ids in _if_filter(filters, "experiment_id"):
+            query = query.where(self._instance.autotsad_execution_table.c.experiment_id.in_(experiment_ids))
+        for ranking_methods in _if_filter(filters, "ranking_method"):
+            query = query.where(self._instance.autotsad_execution_table.c.ranking_method.in_(ranking_methods))
+        for normalization_methods in _if_filter(filters, "normalization_method"):
+            query = query.where(self._instance.autotsad_execution_table.c.normalization_method.in_(normalization_methods))
+        for aggregation_methods in _if_filter(filters, "aggregation_method"):
+            query = query.where(self._instance.autotsad_execution_table.c.aggregation_method.in_(aggregation_methods))
+        return query
+
+    def _build_autotsad_filter_clauses(self, filters: Dict[str, List[Any]], execution_table_name: str = "e") -> str:
+        e = execution_table_name
+        autotsad_filter_clauses = ""
+        for experiment_ids in _if_filter(filters, "experiment_id"):
+            autotsad_filter_clauses += f" and {e}.experiment_id in ({','.join(str(e) for e in experiment_ids)})"
+        for autotsad_versions in _if_filter(filters, "autotsad_version"):
+            autotsad_versions = [f"'{v}'" for v in autotsad_versions]
+            autotsad_filter_clauses += f" and {e}.autotsad_version in ({','.join(autotsad_versions)})"
+        for config_ids in _if_filter(filters, "config_id"):
+            config_ids = [f"'{c}'" for c in config_ids]
+            autotsad_filter_clauses += f" and {e}.config_id in ({','.join(config_ids)})"
+        for ranking_methods in _if_filter(filters, "ranking_method"):
+            ranking_methods = [f"'{rm}'" for rm in ranking_methods]
+            autotsad_filter_clauses += f" and {e}.ranking_method in ({','.join(ranking_methods)})"
+        for normalization_methods in _if_filter(filters, "normalization_method"):
+            normalization_methods = [f"'{nm}'" for nm in normalization_methods]
+            autotsad_filter_clauses += f" and {e}.normalization_method in ({','.join(normalization_methods)})"
+        for aggregation_methods in _if_filter(filters, "aggregation_method"):
+            aggregation_methods = [f"'{am}'" for am in aggregation_methods]
+            autotsad_filter_clauses += f" and {e}.aggregation_method in ({','.join(aggregation_methods)})"
+        return autotsad_filter_clauses
+
+    def _all_metrics(self, table_name: Optional[str] = "e") -> str:
+        if table_name is None:
+            table_name = ""
+        else:
+            table_name += "."
+        return ", ".join(f"{table_name}{metric}" for metric in DB_METRIC_NAME_MAPPING.values())
+
     def query(self, query: str) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=10)
         def _query(query: str) -> pd.DataFrame:
@@ -36,15 +107,17 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
         return _query(query)
 
-    def list_datasets(self, filters: Optional[Dict[str, List[Any]]] = None) -> pd.DataFrame:
+    def list_datasets(self, filters: Optional[Dict[str, List[Any]]] = None, only_paper_datasets: bool = False) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _list_datasets(filters: Optional[Dict[str, List[Any]]]) -> pd.DataFrame:
+        def _list_datasets(filters: Optional[Dict[str, List[Any]]], only_paper_datasets: bool) -> pd.DataFrame:
             if filters:
                 with self._instance.begin() as conn:
                     query = select(self._instance.dataset_table.c.name, self._instance.dataset_table.c.collection).where(
                         self._instance.dataset_table.c.hexhash == self._instance.autotsad_execution_table.c.dataset_id
                     )
                     query = self._add_autotsad_filters(query, filters)
+                    if only_paper_datasets:
+                        query = query.where(self._instance.dataset_table.c.paper == True)
                     query = query.order_by(self._instance.dataset_table.c.collection, self._instance.dataset_table.c.name)
                     query = query.distinct()
                     return pd.read_sql(query, conn)
@@ -54,7 +127,7 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                         select(self._instance.dataset_table.c.name, self._instance.dataset_table.c.collection), conn
                     )
 
-        return _list_datasets(filters)
+        return _list_datasets(filters, only_paper_datasets)
 
     def dataset_collections_for_paper(self) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=1)
@@ -180,7 +253,7 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                     baseline_filter_clauses += " and d.paper = True"
 
                 return pd.read_sql(text(
-                    f"""select "Dataset", "Method", range_pr_auc, range_roc_auc,
+                    f"""select "Dataset", "Method", {self._all_metrics(None)},
                         case when ranking_method in ({AUTOTSAD_SUPER_ENSEMBLES_SQL})
                             then 'AutoTSAD Ensemble'
                             else 'AutoTSAD'
@@ -188,26 +261,27 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                         from (select concat(d.collection, ' ', d.name) as "Dataset",
                                      concat(e.ranking_method, '_', e.normalization_method, '_', e.aggregation_method) as "Method",
                                      -- e.ranking_method as "Method",
-                                     e.range_pr_auc,
-                                     e.range_roc_auc,
+                                     {self._all_metrics()},
                                      e.ranking_method
                               from autotsad_execution e, dataset d, experiment x
                               where e.dataset_id = d.hexhash and e.experiment_id = x.id
                               and x.description != 'paper v1 - optimization / variance' -- avoid duplicates
                               {autotsad_filter_clauses}) as autotsad
                         union
-                        select "Dataset", "Method", range_pr_auc, range_roc_auc, 'Baseline' as "Method Type"
-                        from (select concat(d.collection, ' ', d.name) as "Dataset", e.name as "Method", e.range_pr_auc, e.range_roc_auc
-                              from baseline_execution e,
-                                   dataset d
-                              where e.dataset_id = d.hexhash {baseline_filter_clauses}) as baseline
-                        order by "Dataset", range_pr_auc desc
+                        select "Dataset", "Method", {self._all_metrics(None)}, 'Baseline' as "Method Type"
+                        from (select concat(d.collection, ' ', d.name) as "Dataset",
+                                     e.name as "Method",
+                                     {self._all_metrics()}
+                              from dataset d left outer join baseline_execution e on e.dataset_id = d.hexhash
+                              where {baseline_filter_clauses.lstrip(" and")}) as baseline
+                        order by "Dataset", "range_pr_auc" desc
                     """), conn)
 
         df = _all_aggregated_results(filters, only_paper_datasets)
         if only_paper_methods:
             # filter out results that are not meaningful (we don't describe them in the paper)
-            df = df[~df["Method"].str.endswith("_mean")]
+            # df = df[~df["Method"].str.endswith("_mean")]
+            df = df[~df["Method"].str.endswith("_custom")]
             df = df[~df["Method"].str.contains("minmax")]
             df = df[~df["Method"].str.startswith("interchange")]
             df = df[~df["Method"].str.startswith("training-coverage")]
@@ -216,57 +290,9 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             df = df[~df["Method Type"] == "AutoTSAD Ensemble"]
         return df
 
-    def _resolve_method_type(self, method: str, conn: Connection) -> str:
-        res = conn.execute(select(self._instance.autotsad_execution_table.c.ranking_method)
-                           .where(self._instance.autotsad_execution_table.c.ranking_method == method)
-                           ).first()
-        if method in AUTOTSAD_SUPER_ENSEMBLES:
-            return "AutoTSAD Ensemble"
-        elif res and len(res) > 0:
-            return "AutoTSAD"
-        else:
-            return "Baseline"
-
-    def _add_autotsad_filters(self, query: Select, filters: Dict[str, List[Any]]) -> Select:
-        for autotsad_versions in _if_filter(filters, "autotsad_version"):
-            query = query.where(self._instance.autotsad_execution_table.c.autotsad_version.in_(autotsad_versions))
-        for config_ids in _if_filter(filters, "config_id"):
-            query = query.where(self._instance.autotsad_execution_table.c.config_id.in_(config_ids))
-        for experiment_ids in _if_filter(filters, "experiment_id"):
-            query = query.where(self._instance.autotsad_execution_table.c.experiment_id.in_(experiment_ids))
-        for ranking_methods in _if_filter(filters, "ranking_method"):
-            query = query.where(self._instance.autotsad_execution_table.c.ranking_method.in_(ranking_methods))
-        for normalization_methods in _if_filter(filters, "normalization_method"):
-            query = query.where(self._instance.autotsad_execution_table.c.normalization_method.in_(normalization_methods))
-        for aggregation_methods in _if_filter(filters, "aggregation_method"):
-            query = query.where(self._instance.autotsad_execution_table.c.aggregation_method.in_(aggregation_methods))
-        return query
-
-    def _build_autotsad_filter_clauses(self, filters: Dict[str, List[Any]], execution_table_name: str = "e") -> str:
-        e = execution_table_name
-        autotsad_filter_clauses = ""
-        for experiment_ids in _if_filter(filters, "experiment_id"):
-            autotsad_filter_clauses += f" and {e}.experiment_id in ({','.join(str(e) for e in experiment_ids)})"
-        for autotsad_versions in _if_filter(filters, "autotsad_version"):
-            autotsad_versions = [f"'{v}'" for v in autotsad_versions]
-            autotsad_filter_clauses += f" and {e}.autotsad_version in ({','.join(autotsad_versions)})"
-        for config_ids in _if_filter(filters, "config_id"):
-            config_ids = [f"'{c}'" for c in config_ids]
-            autotsad_filter_clauses += f" and {e}.config_id in ({','.join(config_ids)})"
-        for ranking_methods in _if_filter(filters, "ranking_method"):
-            ranking_methods = [f"'{rm}'" for rm in ranking_methods]
-            autotsad_filter_clauses += f" and {e}.ranking_method in ({','.join(ranking_methods)})"
-        for normalization_methods in _if_filter(filters, "normalization_method"):
-            normalization_methods = [f"'{nm}'" for nm in normalization_methods]
-            autotsad_filter_clauses += f" and {e}.normalization_method in ({','.join(normalization_methods)})"
-        for aggregation_methods in _if_filter(filters, "aggregation_method"):
-            aggregation_methods = [f"'{am}'" for am in aggregation_methods]
-            autotsad_filter_clauses += f" and {e}.aggregation_method in ({','.join(aggregation_methods)})"
-        return autotsad_filter_clauses
-
     def method_quality(self, dataset: str, rmethod: str, nmethod: Optional[str] = None, amethod: Optional[str] = None,
                        method_type: Optional[str] = None, filters: Dict[str, List[Any]] = {},
-                       metric: Literal["range_pr_auc","range_roc_auc","precision_at_k","precision","recall"] = "range_pr_auc") -> float:
+                       metric: str = "range_pr_auc") -> float:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=200)
         def _method_quality(dataset: str, rmethod: str, nmethod: Optional[str] = None, amethod: Optional[str] = None,
                             method_type: Optional[str] = None, filters: Dict[str, List[Any]] = {},
@@ -370,29 +396,20 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
         return _load_ranking_results(dataset, rmethod, nmethod, amethod, method_type, execution_id, filters)
 
-    def load_aggregated_scoring(self, aggregated_scoring_id: int) -> pd.DataFrame:
-        @cache_data(ttl=self._ttl, persist=self._persist, max_entries=100)
-        def _load_aggregated_scoring(aggregated_scoring_id: int) -> pd.DataFrame:
-            with self._instance.begin() as conn:
-                return pd.read_sql(
-                    select(self._instance.aggregated_scoring_scores_table.c.time,
-                           self._instance.aggregated_scoring_scores_table.c.score)
-                    .where(self._instance.aggregated_scoring_scores_table.c.aggregated_scoring_id == aggregated_scoring_id)
-                    .order_by(self._instance.aggregated_scoring_scores_table.c.time),
-                    conn
-                )
-
-        return _load_aggregated_scoring(aggregated_scoring_id)
-
     def load_aggregated_scoring_for(self, dataset: str, rmethod: str, nmethod: str, amethod: str,
                                     filters: Dict[str, List[Any]] = {}) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _load_aggregated_scoring_for(dataset: str, rmethod: str, nmethod: str, amethod: str, filters: Dict[str, List[Any]]) -> pd.DataFrame:
+        def _load_scorings_for(dataset: str, rmethod: str, nmethod: str, amethod: str, filters: Dict[str, List[Any]]) -> pd.DataFrame:
             with self._instance.begin() as conn:
                 query = (
-                    select(self._instance.aggregated_scoring_scores_table.c.time, self._instance.aggregated_scoring_scores_table.c.score)
+                    select(
+                        self._instance.ranking_entry_table.c.algorithm_scoring_id,
+                        self._instance.scoring_table.c.time,
+                        self._instance.scoring_table.c.score
+                    )
                     .where(
-                        self._instance.aggregated_scoring_scores_table.c.aggregated_scoring_id == self._instance.autotsad_execution_table.c.aggregated_scoring_id,
+                        self._instance.ranking_entry_table.c.ranking_id == self._instance.autotsad_execution_table.c.algorithm_ranking_id,
+                        self._instance.ranking_entry_table.c.algorithm_scoring_id == self._instance.scoring_table.c.algorithm_scoring_id,
                         self._instance.autotsad_execution_table.c.dataset_id == self._instance.dataset_table.c.hexhash,
                         self._instance.autotsad_execution_table.c.experiment_id == self._instance.experiment_table.c.id,
                         self._instance.experiment_table.c.description != "paper v1 - optimization / variance",
@@ -401,30 +418,37 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                         self._instance.autotsad_execution_table.c.aggregation_method == amethod,
                         self._instance.dataset_table.c.name == dataset
                     )
-                    .order_by(self._instance.aggregated_scoring_scores_table.c.time))
+                    .order_by(self._instance.scoring_table.c.time))
                 query = self._add_autotsad_filters(query, filters)
                 return pd.read_sql(query, conn)
 
-        return _load_aggregated_scoring_for(dataset, rmethod, nmethod, amethod, filters)
+        df = _load_scorings_for(dataset, rmethod, nmethod, amethod, filters)
 
-    def load_runtime_traces(self, traces: List[str], datasets: List[str], config_names: List[str]) -> pd.DataFrame:
+        # compute combined scores
+        scores = df.pivot(index="time", columns="algorithm_scoring_id", values="score").values
+        scores = normalize_scores(scores, normalization_method=nmethod)
+        combined_score = aggregate_scores(scores, agg_method=amethod)
+        df_combined_scores = pd.DataFrame({"time": df["time"].unique(), "score": combined_score})
+        return df_combined_scores
+
+    def load_runtime_traces(self, traces: List[str], datasets: List[str], config_names: List[str], autotsad_versions: List[str]) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _load_runtime_traces(traces: List[str], datasets: List[str], config_names: List[str]) -> pd.DataFrame:
+        def _load_runtime_traces(traces: List[str], datasets: List[str], config_names: List[str], autotsad_versions: List[str]) -> pd.DataFrame:
             trace_list = ",".join([f"'{t}'" for t in traces])
             dataset_name_list = ",".join([f"'{d}'" for d in datasets])
             config_name_list = ",".join([f"'{c}'" for c in config_names])
+            version_list = ",".join([f"'{v}'" for v in autotsad_versions])
             query = f"""select a.name as "dataset_name", a."n_jobs", t.trace_name,
                                t.position, t.duration_ns / 1e9 as "runtime"
                         from runtime_trace t,
                              (select distinct e.experiment_id, d.name,
                                      (c.config #>> '{{general, n_jobs}}')::integer as "n_jobs"
-                              from experiment x, dataset d, configuration c, autotsad_execution e
+                              from autotsad_execution e, dataset d, configuration c
                               where e.dataset_id = d.hexhash
                                 and e.config_id = c.id
-                                and e.experiment_id = x.id
-                                and x.description in ('paper v1 - quality', 'paper v1 - scaling')
                                 and c.description in ({config_name_list})
-                                and d.name in ({dataset_name_list})) a
+                                and d.name in ({dataset_name_list})
+                                and e.autotsad_version in ({version_list})) a
                         where t.experiment_id = a.experiment_id
                           and trace_name in ({trace_list})
                           and trace_type = 'END'
@@ -433,7 +457,7 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _load_runtime_traces(traces, datasets, config_names)
+        return _load_runtime_traces(traces, datasets, config_names, autotsad_versions)
 
     def load_mean_runtime(self, optim_filters: Dict[str, List[Any]], default_filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
@@ -511,13 +535,13 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             query = f"""select collection, dataset,
                                case when optimization_disabled then 0 else max_trials end as "max_trials",
                                seed,
-                               range_pr_auc,
+                               {self._all_metrics(None)},
                                runtime
                         from (select d.collection, d.name as "dataset",
                                      (c.config #>> '{{general, seed}}')::integer                      as "seed",
                                      (c.config #>> '{{optimization, disabled}}')::boolean             as "optimization_disabled",
                                      (c.config #>> '{{optimization, max_trails_per_study}}')::integer as "max_trials",
-                                     e.range_pr_auc, e.runtime
+                                     {self._all_metrics()}, e.runtime
                               from autotsad_execution e, configuration c, dataset d, experiment x
                               where e.config_id = c.id
                                 and e.dataset_id = d.hexhash
@@ -532,21 +556,22 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
         return _load_optimization_variance_results(filters, datasets, config_names)
 
-    def load_optimization_improvements(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
+    def load_optimization_improvements(self, filters: Dict[str, List[Any]], metric: str = "range_pr_auc",
+                                       only_paper_datasets: bool = True) -> pd.DataFrame:
         filters.pop("config_id", None)
         # filters.pop("experiment_id", None)
 
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _load_optimization_improvements(filters: Dict[str, List[Any]], only_paper_datasets: bool) -> pd.DataFrame:
+        def _load_optimization_improvements(filters: Dict[str, List[Any]], metric: str, only_paper_datasets: bool) -> pd.DataFrame:
             autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
 
             if only_paper_datasets:
                 autotsad_filter_clauses += " and d.paper = True"
-            sub_query = """select distinct d.collection || ' ' || d.name as "dataset", e.range_pr_auc
+            sub_query = f"""select distinct d.collection || ' ' || d.name as "dataset", e.{metric}
                            from autotsad_execution e, dataset d, configuration c
                            where e.dataset_id = d.hexhash
                              and e.config_id = c.id"""
-            query = f"""select a.dataset, a.range_pr_auc - b.range_pr_auc as "improvement"
+            query = f"""select a.dataset, a.{metric} - b.{metric} as "improvement"
                         from ({sub_query} and c.description = 'paper v1' {autotsad_filter_clauses}) a inner join
                              ({sub_query} and c.description = 'paper v1 - default ensemble (no optimization, seed=1)' {autotsad_filter_clauses}) b
                              on a.dataset = b.dataset
@@ -555,7 +580,7 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _load_optimization_improvements(filters, only_paper_datasets)
+        return _load_optimization_improvements(filters, metric, only_paper_datasets)
 
     def compute_top1_baseline(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
@@ -565,9 +590,9 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             if only_paper_datasets:
                 autotsad_filter_clauses += " and d.paper = True"
 
-            query = f"""select d.collection || ' ' || d.name as "dataset",
+            query = f"""select d.collection || ' ' || d.name as "Dataset",
                                'AutoTSAD Top-1' as "Method Type", 'top-1' as "Method",
-                               s.range_pr_auc, s.range_roc_auc
+                               s.range_pr_auc
                         from autotsad_execution e, dataset d, configuration c, algorithm_ranking r, algorithm_ranking_entry re, algorithm_scoring s
                         where e.dataset_id = d.hexhash
                             and e.config_id = c.id

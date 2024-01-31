@@ -80,18 +80,20 @@ def distance(A, B=None):
     using Merge sort algorithm.
     If only one permutation is given, the distance will be computed with the
     identity permutation as the second permutation
-   Parameters
-   ----------
-   A: ndarray
-        The first permutation
-   B: ndarray, optional
-        The second permutation (default is None)
-   Returns
-   -------
-   int
+
+    Parameters
+    ----------
+    A: ndarray
+         The first permutation
+    B: ndarray, optional
+         The second permutation (default is None)
+    Returns
+    -------
+    int
         Kendall's-tau distance between both permutations (equal to the number of inversions in their composition).
     """
-    if B is None: B = list(range(len(A)))
+    if B is None:
+        B = list(range(len(A)))
 
     A = np.asarray(A).copy()
     B = np.asarray(B).copy()
@@ -121,14 +123,14 @@ def distance(A, B=None):
 def median(rankings):  # Borda
     """ This function computes the central permutation (consensus ranking) given
     several permutations.
-        Parameters
-        ----------
-        rankings: ndarray
-            Matrix of several permutations
-        Returns
-        -------
-        ndarray
-            The central permutation of permutations given.
+    Parameters
+    ----------
+    rankings: ndarray
+        Matrix of several permutations
+    Returns
+    -------
+    ndarray
+        The central permutation of permutations given.
     """
     consensus = np.argsort(  # give the inverse of result --> sigma_0
         np.argsort(  # give the indexes to sort the sum vector --> sigma_0^-1
@@ -139,19 +141,19 @@ def median(rankings):  # Borda
 
 def borda_partial(rankings, w, k):
     """This function approximate the consensus ranking of a top-k rankings using Borda algorithm.
-        Each nan-ranked item is assumed to have ranking $k$
-        Parameters
-        ----------
-        rankings: ndarray
-            The matrix of permutations
-        w: float
-            weight of each ranking
-        k: int
-            Length of partial permutations (only top items)
-        Returns
-        -------
-        ndarray
-            Consensus ranking.
+    Each nan-ranked item is assumed to have ranking $k$
+    Parameters
+    ----------
+    rankings: ndarray
+        The matrix of permutations
+    w: float
+        weight of each ranking
+    k: int
+        Length of partial permutations (only top items)
+    Returns
+    -------
+    ndarray
+        Consensus ranking.
     """
     a, b = rankings, w
     a, b = np.nan_to_num(rankings, nan=k), w
@@ -165,16 +167,16 @@ def borda_partial(rankings, w, k):
 def check_theta_phi(theta, phi):
     """This function automatically converts theta to phi or phi to theta as
     list or float depending on the values and value types given as input.
-        Parameters
-        ----------
-        theta: float or list
-            Dispersion parameter theta to convert to phi (can be None)
-        phi: float or list
-            Dispersion parameter phi to convert to theta (can be None)
-        Returns
-        -------
-        tuple
-            tuple containing both theta and phi (of list or float type depending on the input type)
+    Parameters
+    ----------
+    theta: float or list
+        Dispersion parameter theta to convert to phi (can be None)
+    phi: float or list
+        Dispersion parameter phi to convert to theta (can be None)
+    Returns
+    -------
+    tuple
+        tuple containing both theta and phi (of list or float type depending on the input type)
     """
     if not ((phi is None) ^ (theta is None)):
         print("Set valid values for phi or theta")
@@ -191,27 +193,27 @@ def check_theta_phi(theta, phi):
 
 def theta_to_phi(theta):
     """ This functions converts theta dispersion parameter into phi
-        Parameters
-        ----------
-        theta: float
-            Real dispersion parameter
-        Returns
-        -------
-        float
-            phi real dispersion parameter
+    Parameters
+    ----------
+    theta: float
+        Real dispersion parameter
+    Returns
+    -------
+    float
+        phi real dispersion parameter
     """
     return np.exp(-theta)
 
 
 def phi_to_theta(phi):
     """This functions converts phi dispersion parameter into theta
-        Parameters
-        ----------
-        phi: float
-            Real dispersion parameter
-        Returns
-        -------
-        float
-            theta real dispersion parameter
+    Parameters
+    ----------
+    phi: float
+        Real dispersion parameter
+    Returns
+    -------
+    float
+        theta real dispersion parameter
     """
     return -np.log(phi)

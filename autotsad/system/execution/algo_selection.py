@@ -1,4 +1,4 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -315,7 +315,7 @@ def interchange_ranking(df_results: pd.DataFrame,
 
 def rank_aggregation_mim(df_results: pd.DataFrame,
                          scores: Optional[pd.DataFrame] = None,
-                         max_instances: int = config.general.max_algorithm_instances) -> pd.DataFrame:
+                         max_instances: int = config.general.max_algorithm_instances) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Robust rank aggregation method using minimum influence metric (MIM) [1]_.
 
     We use a selected set of our ranking methods to compute individual rankings and then aggregate them using the MIM.
@@ -344,13 +344,14 @@ def rank_aggregation_mim(df_results: pd.DataFrame,
     # compute aggregated ranking
     aggregated_ranks = minimum_influence(ranks.values.T, aggregation_type="borda")
     selected_instances = pd.Series(aggregated_ranks, index=instances, dtype=np.int_)
+    ranks["aggregated-minimum-influence"] = selected_instances
 
     selected_results = df_results[algorithm_instances(df_results).isin(selected_instances.index)].copy()
     selected_results["name"] = algorithm_instances(selected_results)
     selected_results["rank"] = selected_results["name"].map(selected_instances)
     selected_results = selected_results.sort_values("rank")
     selected_results = selected_results.drop(columns=["name", "rank"])
-    return selected_results
+    return selected_results, ranks
 
 
 def select_algorithm_instances(df_results: pd.DataFrame,
@@ -392,7 +393,7 @@ def select_algorithm_instances(df_results: pd.DataFrame,
             # df_results = interchange_ranking(df_results, scores, distance_metric=_get_metric(method),
             #                                  relevance="quality", top_k_lower_bound=30, upper_bound=0.025)
         elif method == "aggregated-minimum-influence":
-            df_results = rank_aggregation_mim(df_results, scores, max_instances=max_instances)
+            df_results, _ = rank_aggregation_mim(df_results, scores, max_instances=max_instances)
         else:
             raise ValueError(f"Selection method '{method}' is not supported!")
 

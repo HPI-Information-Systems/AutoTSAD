@@ -9,7 +9,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from .rank_aggregation import (
+from .borda import (
     borda,
     partial_borda,
     trimmed_borda,

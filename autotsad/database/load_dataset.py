@@ -1,4 +1,3 @@
-import hashlib
 from pathlib import Path
 from typing import Optional
 
@@ -7,6 +6,7 @@ import pandas as pd
 from sqlalchemy import select, insert
 
 from .database import Database
+from ..dataset import get_hexhash
 
 
 def load_dataset(db: Database, dataset_path: Path, name: Optional[str] = None, collection: Optional[str] = None,
@@ -16,8 +16,7 @@ def load_dataset(db: Database, dataset_path: Path, name: Optional[str] = None, c
         raise ValueError(f"Path to the dataset ({path}) is invalid!")
 
     print(f"Reading dataset from {dataset_path}")
-    with dataset_path.open("rb") as fh:
-        hexhash = hashlib.md5(fh.read()).hexdigest()
+    hexhash = get_hexhash(dataset_path)
     if name is not None:
         dataset_name = name
     else:

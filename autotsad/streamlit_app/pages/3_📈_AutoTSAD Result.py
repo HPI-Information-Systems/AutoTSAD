@@ -39,7 +39,7 @@ if dataset == "":
     st.stop()
 
 df_exec = conn.query(f"""select e.id, e.experiment_id, e.autotsad_version, e.config_id, e.ranking_method,
-        e.normalization_method, e.aggregation_method, e.range_pr_auc as "Range-PR-AUC", e.runtime, e.aggregated_scoring_id
+        e.normalization_method, e.aggregation_method, e.range_pr_auc as "Range-PR-AUC", e.runtime
     from autotsad_execution e, dataset d
     where e.dataset_id = d.hexhash
         and d.name = '{dataset}'
@@ -93,14 +93,12 @@ col2.metric("Runtime (s)", np.round(execution["runtime"]), delta=delta, delta_co
 name = f"{dataset} - {ranking_method}-{normalization_method}-{aggregation_method}"
 df_ranking = conn.load_ranking_results(dataset, rmethod=execution, method_type="AutoTSAD", filters=filters)
 df_dataset = conn.load_dataset(dataset)
-try:
-    df_combined_scores = conn.load_aggregated_scoring(int(execution["aggregated_scoring_id"]))
-except TypeError:
-    # compute combined scores
-    scores = df_ranking[1].pivot(index="time", columns="algorithm_scoring_id", values="score").values
-    scores = normalize_scores(scores, normalization_method=normalization_method)
-    combined_score = aggregate_scores(scores, agg_method=aggregation_method)
-    df_combined_scores = pd.DataFrame({"time": df_ranking[1]["time"].unique(), "score": combined_score})
+
+# compute combined scores
+scores = df_ranking[1].pivot(index="time", columns="algorithm_scoring_id", values="score").values
+scores = normalize_scores(scores, normalization_method=normalization_method)
+combined_score = aggregate_scores(scores, agg_method=aggregation_method)
+df_combined_scores = pd.DataFrame({"time": df_ranking[1]["time"].unique(), "score": combined_score})
 
 st.write("## Combined anomaly score")
 fig = plot_aggregated_scores(df_dataset, df_combined_scores, ranking_method, normalization_method, aggregation_method, title=name)

@@ -20,6 +20,37 @@ from .system.anomaly import encode_annotations
 from .util import majority_vote
 
 
+def get_hexhash(dataset_path: Union[Path, Dataset]) -> str:
+    """Compute the MD5 hash of a (dataset)-file.
+
+    Parameters
+    ----------
+    dataset_path : Union[Path, Dataset]
+        The path to the file or the dataset object. If a dataset object is provided, it is first written to a
+        temporary file to compute its hash.
+
+    Returns
+    -------
+    hexhash : str
+        The MD5 hash of the file.
+    """
+
+    def _hash_file(path: Path) -> str:
+        return hashlib.md5(path.read_bytes()).hexdigest()
+
+    if isinstance(dataset_path, Dataset):
+        import tempfile
+
+        with tempfile.NamedTemporaryFile() as fh:
+            filepath = Path(fh.name)
+            dataset_path.to_csv(filepath)
+            hexhash = _hash_file(filepath)
+    else:
+        hexhash = _hash_file(dataset_path)
+
+    return hexhash
+
+
 @dataclass(init=False, repr=True, order=True)
 class Dataset(abc.ABC):
     name: str
@@ -147,8 +178,7 @@ class TestDataset(Dataset):
 
     @staticmethod
     def from_file(filepath: Path) -> TestDataset:
-        with filepath.open("rb") as fh:
-            hexhash = hashlib.md5(fh.read()).hexdigest()
+        hexhash = get_hexhash(filepath)
         df = pd.read_csv(filepath)
         return TestDataset.from_df(df, hexhash, name=filepath.stem)
 
@@ -171,16 +201,6 @@ class TrainDataset(Dataset, abc.ABC):
     @property
     def contamination(self) -> float:
         return self.label.sum() / self.length
-
-    def to_csv(self, path: Path) -> Path:
-        filename = path / f"{self.name}.csv"
-        df = pd.DataFrame({
-            "timestamp": np.arange(self.length),
-            "data": self.data,
-            "is_anomaly": self.label
-        })
-        df.to_csv(filename, index=False)
-        return filename
 
 
 @dataclass(init=False, repr=True, order=True)

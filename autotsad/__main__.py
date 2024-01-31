@@ -8,6 +8,7 @@ from periodicity_detection.__main__ import register_periodicity_arguments, main 
 from ._version import __version__
 from .database.cli import main as manage_db, register_db_arguments
 from .system.main import main as run_autotsad, register_autotsad_arguments
+from .baselines.__main__ import main as run_baseline, register_baseline_arguments
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -30,6 +31,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser_period = subparsers.add_parser("estimate-period", help="Estimate the period size of a given time series "
                                                                   "dataset.")
     register_periodicity_arguments(parser_period)
+
+    parser_baselines = subparsers.add_parser("baselines", help="Run a baseline algorithm on a given dataset.")
+    register_baseline_arguments(parser_baselines)
     return parser
 
 
@@ -46,6 +50,9 @@ def main(argv: List[str]):
     elif args.command == "estimate-period":
         period = estimate_periodicity(args)
         print(period)
+
+    elif args.command == "baselines":
+        run_baseline(args)
 
     else:
         raise ValueError(f"Unknown command '{args.command}' for AutoTSAD!")

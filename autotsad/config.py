@@ -7,7 +7,9 @@ from typing import Optional, Any, FrozenSet, Tuple, List, Dict
 
 import numpy as np
 from nx_config import Config, ConfigSection, validate
-from timeeval.metrics import Metric, RangePrAUC, RangeRocAUC, PrAUC, RocAUC, RangePrecision, RangeRecall, PrecisionAtK
+from timeeval.metrics import Metric, RangePrAUC, RangeRocAUC, PrAUC, RocAUC, RangePrecision, RangeRecall, PrecisionAtK, \
+    RangeFScore, RangePrVUS, RangeRocVUS, Precision, Recall, F1Score
+from timeeval.metrics.thresholding import NoThresholding
 
 
 class ConfigurationError(Exception):
@@ -20,9 +22,15 @@ METRIC_MAPPING = {
     "RocAUC": RocAUC(),
     "RangePrAUC": RangePrAUC(buffer_size=100),
     "RangeRocAUC": RangeRocAUC(buffer_size=100),
+    "RangePrVUS": RangePrVUS(),
+    "RangeRocVUS": RangeRocVUS(),
     "RangePrecision": RangePrecision(),
     "RangeRecall": RangeRecall(),
-    "PrecisionAtK": PrecisionAtK()
+    "RangeFScore": RangeFScore(),
+    "Precision": Precision(NoThresholding()),
+    "Recall": Recall(NoThresholding()),
+    "FScore": F1Score(NoThresholding()),
+    "PrecisionAtK": PrecisionAtK(),
 }
 ALGORITHMS: Tuple[str, ...] = (
     "subsequence_lof",

@@ -252,11 +252,19 @@ create table if not exists autotsad_execution
             references algorithm_ranking
             on update cascade on delete set null,
     runtime              double precision,
+    pr_auc               double precision,
+    roc_auc              double precision,
     range_pr_auc         double precision,
     range_roc_auc        double precision,
+    range_pr_vus         double precision,
+    range_roc_vus        double precision,
+    range_precision      double precision,
+    range_recall         double precision,
+    range_fscore         double precision,
     precision_at_k       double precision,
     precision            double precision,
-    recall               double precision
+    recall               double precision,
+    fscore               double precision
 );
 
 alter table autotsad_execution
@@ -272,13 +280,13 @@ create index if not exists autotsad_execution_dataset_id_idx
 -- result table for the baseline executions
 create table if not exists baseline_execution
 (
-    id             serial  not null
+    id              serial  not null
         constraint baseline_execution_pk primary key,
-    dataset_id     varchar not null
+    dataset_id      varchar not null
         constraint baseline_execution_dataset_id_fk
             references dataset
             on update cascade on delete restrict,
-    name           varchar not null,
+    name            varchar not null,
     algorithm_ranking_id integer
         constraint baseline_execution_algorithm_ranking_id_fk
             references algorithm_ranking
@@ -287,12 +295,20 @@ create table if not exists baseline_execution
         constraint baseline_execution_algorithm_scoring_id_fk
             references algorithm_scoring
             on update cascade on delete set null,
-    runtime        double precision,
-    range_pr_auc   double precision,
-    range_roc_auc  double precision,
-    precision_at_k double precision,
-    precision      double precision,
-    recall         double precision
+    runtime         double precision,
+    pr_auc          double precision,
+    roc_auc         double precision,
+    range_pr_auc    double precision,
+    range_roc_auc   double precision,
+    range_pr_vus    double precision,
+    range_roc_vus   double precision,
+    range_precision double precision,
+    range_recall    double precision,
+    range_fscore    double precision,
+    precision_at_k  double precision,
+    precision       double precision,
+    recall          double precision,
+    fscore          double precision
 );
 
 alter table baseline_execution
@@ -319,50 +335,4 @@ create table if not exists runtime_trace
 
 alter table runtime_trace
     owner to autotsad;
----------------------------------------
-
----------------------------------------
--- aggregated scoring tables
-create table if not exists aggregated_scoring
-(
-    id              serial  not null
-        constraint aggregated_scoring_pk primary key,
-    dataset_id      varchar
-        constraint timeseries_dataset_id_fk
-            references dataset
-            on update cascade on delete set null,
-    experiment_id   integer
-        constraint aggregated_scoring_experiment_id_fk
-            references experiment
-            on update cascade on delete restrict
-);
-
-alter table aggregated_scoring
-    owner to autotsad;
-
-create sequence if not exists aggregated_scoring_id_seq as integer;
-alter sequence aggregated_scoring_id_seq owner to autotsad;
-alter sequence aggregated_scoring_id_seq owned by aggregated_scoring.id;
-
-create table if not exists aggregated_scoring_scores
-(
-    time                 integer not null,
-    aggregated_scoring_id integer not null
-        constraint scoring_aggregated_scoring_id_fk
-            references aggregated_scoring
-            on update cascade on delete cascade,
-    score                double precision
-);
-
-alter table aggregated_scoring_scores
-    owner to autotsad;
-
-create index if not exists scoring_aggregated_scoring_id_time_idx
-    on aggregated_scoring_scores (aggregated_scoring_id, time asc);
-
-alter table autotsad_execution
-add column aggregated_scoring_id integer
-    constraint autotsad_execution_aggregated_scoring_id_fk
-        references aggregated_scoring
-        on update cascade on delete set null;
 ---------------------------------------

@@ -1,14 +1,17 @@
+/results
+/results-*
 tmp*
 timeeval_experiments/results
 **/*.log
+.streamlit/secrets.toml
 # temporary plotly-plots
 *.html
 # result archives
 *.tar.gz
 *.tar
-.streamlit/secrets.toml
-#slurm output files
+# slurm output files
 /*.out
+.venv*
 
 ########################################
 # Python.gitignore from github/gitignore
