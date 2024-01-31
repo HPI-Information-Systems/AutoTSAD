@@ -1,0 +1,3 @@
+[submodule "tsadams"]
+	path = tsadams
+	url = https://github.com/CodeLionX/tsad-model-selection.git
