@@ -1,0 +1,55 @@
+[
+  {
+    "anomaly_length": {
+      "max": 201,
+      "median": 201,
+      "min": 201
+    },
+    "contamination": 0.09970238095238096,
+    "dataset_id": [
+      "NAB",
+      "rds_cpu_utilization_cc0c53"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 4032,
+    "means": {
+      "value": 8.112208524305554
+    },
+    "num_anomalies": 2,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "trend_stationary"
+    },
+    "stddevs": {
+      "value": 3.6525280649902654
+    },
+    "trends": {
+      "value": [
+        {
+          "coef": [
+            0.002256373913313788
+          ],
+          "confidence_r2": 0.5171333141615428,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            6.196439424424871e-07
+          ],
+          "confidence_r2": 0.6759780205645282,
+          "tpe": "quadratic"
+        },
+        {
+          "coef": [
+            1.7012885146571724e-10
+          ],
+          "confidence_r2": 0.7486674957607854,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  }
+]

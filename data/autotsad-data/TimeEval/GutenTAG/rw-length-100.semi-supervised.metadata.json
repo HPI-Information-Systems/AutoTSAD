@@ -1,0 +1,66 @@
+[
+  {
+    "anomaly_length": {
+      "max": 100,
+      "median": 100,
+      "min": 100
+    },
+    "contamination": 0.01,
+    "dataset_id": [
+      "univariate-anomaly-test-cases",
+      "rw-length-100.semi-supervised"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 10000,
+    "means": {
+      "value-0": 0.02063538891636859
+    },
+    "num_anomalies": 1,
+    "stationarities": {
+      "value-0": "trend_stationary"
+    },
+    "stddevs": {
+      "value-0": 0.5218034588238174
+    },
+    "trends": {
+      "value-0": []
+    }
+  },
+  {
+    "anomaly_length": {
+      "max": 0,
+      "median": 0,
+      "min": 0
+    },
+    "contamination": 0.0,
+    "dataset_id": [
+      "univariate-anomaly-test-cases",
+      "rw-length-100.semi-supervised"
+    ],
+    "dimensions": 1,
+    "is_train": true,
+    "length": 10000,
+    "means": {
+      "value-0": 0.16247838919003577
+    },
+    "num_anomalies": 0,
+    "stationarities": {
+      "value-0": "trend_stationary"
+    },
+    "stddevs": {
+      "value-0": 0.4967818790482414
+    },
+    "trends": {
+      "value-0": [
+        {
+          "coef": [
+            -1.3230172888282485e-12
+          ],
+          "confidence_r2": 0.5698129794194138,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  }
+]

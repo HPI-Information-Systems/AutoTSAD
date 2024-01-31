@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 800,
+      "median": 800,
+      "min": 800
+    },
+    "contamination": 0.091324200913242,
+    "dataset_id": [
+      "NormA",
+      "Discords_dutch_power_demand"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 35040,
+    "means": {
+      "value": 1144.0378710045661
+    },
+    "num_anomalies": 4,
+    "periods": {
+      "value": 111
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 292.7257914146062
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 150,
+      "median": 150,
+      "min": 150
+    },
+    "contamination": 0.075,
+    "dataset_id": [
+      "NormA",
+      "Discords_annsgun"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 2000,
+    "means": {
+      "value": 309.774236425
+    },
+    "num_anomalies": 1,
+    "periods": {
+      "value": 111
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 96.24423730114376
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

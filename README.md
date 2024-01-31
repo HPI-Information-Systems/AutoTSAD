@@ -49,7 +49,9 @@ The score ranking can interactively be explored and altered.
 | :--------- | :-------------- |
 | [`autotsad`](./autotsad/) | AutoTSAD source code. |
 | [`autotsad.tsad_algorithms`](./autotsad/tsad_algorithms/) | Base algorithm implementations for the ensemble. |
-| [`data`](./data) | Evaluation datasets. |
+| [`autotsad.baselines`](./autotsad/baselines) | Implementation for the SELECT and tsadams baselines. |
+| [`data/autotsad-data`](./data/autotsad-data) | Evaluation datasets. |
+| [`data/baseline-results`](./data/baseline-results/) | Folder for the baseline results (just for the Oracle baseline for now). |
 | ... | tbd |
 | [`requirements.txt`](./requirements.txt) | Pip-dependencies required to run AutoTSAD. |
 | [`autotsad.yaml`](./autotsad.yaml) | Configuration file template. Please find the configuration key documentation [here](./autotsad/config.py). |

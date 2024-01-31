@@ -1,0 +1,64 @@
+[
+  {
+    "anomaly_length": {
+      "max": 160,
+      "median": 160,
+      "min": 160
+    },
+    "contamination": 0.00648639883244821,
+    "dataset_id": [
+      "KDD-TSAD",
+      "102_UCR_Anomaly_NOISEMesoplodonDensirostris"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 24667,
+    "means": {
+      "value": 8.819253155341144
+    },
+    "num_anomalies": 1,
+    "periods": {
+      "value": 43
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 0.6803325789628355
+    },
+    "trends": {
+      "value": []
+    }
+  },
+  {
+    "anomaly_length": {
+      "max": 0,
+      "median": 0,
+      "min": 0
+    },
+    "contamination": 0.0,
+    "dataset_id": [
+      "KDD-TSAD",
+      "102_UCR_Anomaly_NOISEMesoplodonDensirostris"
+    ],
+    "dimensions": 1,
+    "is_train": true,
+    "length": 10000,
+    "means": {
+      "value": 8.93077789982
+    },
+    "num_anomalies": 0,
+    "periods": {
+      "value": 45
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 0.7756725998249269
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

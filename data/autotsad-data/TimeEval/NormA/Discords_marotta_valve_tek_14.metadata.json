@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 128,
+      "median": 128,
+      "min": 128
+    },
+    "contamination": 0.0512,
+    "dataset_id": [
+      "NormA",
+      "Discords_marotta_valve_tek_14"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 5000,
+    "means": {
+      "value": 1.120064
+    },
+    "num_anomalies": 2,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 1.7031232373660843
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]
