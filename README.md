@@ -1,5 +1,7 @@
 <div align="center">
-<img width="100px" src="https://github.com/HPI-Information-Systems/AutoTSAD/raw/main/autotsad-logo.png" alt="AutoTSAD logo"/>
+
+![AutoTSAD logo](./autotsad-logo.png)
+
 <h1 align="center">AutoTSAD</h1>
 <p>
 Unsupervised Anomaly Detection System for Univariate Time Series.
@@ -14,13 +16,12 @@ Unsupervised Anomaly Detection System for Univariate Time Series.
 
 Detecting anomalous subsequences in time series data is one of the most important tasks in time series analytics, having applications in environmental monitoring, preventive healthcare, predictive maintenance, and many further areas.
 Data scientists have developed various anomaly detection algorithms with individual strengths, such as the ability to detect repeating anomalies, anomalies in non-periodic time series, or anomalies with varying lengths.
-For a given dataset and task, the optimal algorithm with a suitable parametrization and, in some cases, sufficient training data, usually solves the anomaly detection problem well.
-However, given the high number of existing algorithms, their numerous parameters, and a pervasive lack of training data and domain knowledge, effective anomaly detection is still a complex task that heavily relies on manual experimentation and, often, luck.
+For a given dataset and task, the best algorithm with a suitable parameterization and, in some cases, sufficient training data, usually solves the anomaly detection problem well.
+However, given the high number of existing algorithms, their numerous parameters, and a pervasive lack of training data and domain knowledge, effective anomaly detection is still a complex task that heavily relies on manual experimentation and often, as experiments show, luck.
 
-AutoTSAD is an unsupervised system, which **parameterizes, executes, and ensembles various highly effective anomaly detection algorithms**.
-The system automatically presents highly flexible anomaly scorings for arbitrary time series.
-Any such scoring can be broken down into our novel score ranking that also non-expert users can interactively explore and extend.
-Our experiments show that AutoTSAD offers an anomaly detection accuracy comparable to the best manually optimized anomaly detection algorithms, but without a need for training data or parameter expertise.
+We propose the unsupervised AutoTSAD system, which **parameterizes, executes, and ensembles various highly effective anomaly detection algorithms**.
+The ensembling system automatically presents an aggregated anomaly scoring for an arbitrary time series without a need for training data or parameter expertise.
+Our experiments show that AutoTSAD offers an anomaly detection accuracy comparable to the best manually optimized anomaly detection algorithms, and can significantly outperform existing method selection and ensembling approaches for time series anomaly detection.
 
 ### Architecture
 
@@ -53,24 +54,29 @@ The score ranking can interactively be explored and altered.
 | [`data/autotsad-data`](./data/autotsad-data) | Evaluation datasets. |
 | [`data/baseline-results`](./data/baseline-results/) | Folder for the baseline results (just for the Oracle baseline for now). |
 | ... | tbd |
+| [`scripts`](./scripts) | Scripts to prepare the data, load them into the DB, and post-process some experimental results. |
 | [`requirements.txt`](./requirements.txt) | Pip-dependencies required to run AutoTSAD. |
 | [`autotsad.yaml`](./autotsad.yaml) | Configuration file template. Please find the configuration key documentation [here](./autotsad/config.py). |
 | [`autotsad-exp-config.yaml`](./autotsad-exp-config.yaml) | AutoTSAD onfiguration used for the experiments. |
 
 ## Results
 
-We compare the anomaly detection quality of AutoTSAD with three to four baselines on all 106 univariate time series in the [`data`](./data)-folder.
+We compare the anomaly detection quality of AutoTSAD with five baselines on all 106 univariate time series in the [`data`](./data)-folder.
 The baseline algorithms are the following:
 
 - **Oracle**: Perfect selection algorithm that _magically_ selects the best performing algorithm for every time series from the 71 [TimeEval-algorithms](https://github.com/HPI-Information-Systems/timeeval-algorithms) based on the Range-PR-AUC metric.
-- **Random Algorithm**: Mean quality of the 71 TimeEval-algorithms for each time series.
-  We computed the results only for the Range-PR-AUC and Range-ROC-AUC metrics.
-- **k-Means**: Individual time series anomaly detection algorithm, which achieved overall best results.
-- **SAND**: Individual time series anomaly detection algorithm, which is particularly specialized for time series with different base behaviors and shifting anomalies.
+- **k-Means**: Individual time series anomaly detection algorithm, which achieved overall best results and is the best of our base algorithms (see [Base Algorithms](#base-algorithms)).
+- **SELECT** (Horizontal and Vertical): Outlier ensembling technique that uses two different method selection strategies.
+  We re-implemented this method in Python and use it on the same base algorithms as AutoTSAD.
+- **tsadams**: Method selection technique for time series anomaly detection.
+  We use the implementation from the original authors.
+  Because the method requires semi-supervised forecasting algorithms, we cannot use it on our base algorithms and use the provided ones.
 
 For all baseline algorithms and AutoTSAD, we use the [manually-tuned hyperparameter heuristics from TimeEval](https://github.com/HPI-Information-Systems/TimeEval/blob/main/timeeval_experiments/param-config.json).
 
 ### Range-PR-AUC Metric
+
+We use the Range-PR-AUC metric as our main evaluation measure:
 
 ![Detection quality comparison using Range-PR-AUC metric](docs/figures/quality-range-pr-auc.png)
 
@@ -79,12 +85,14 @@ For all baseline algorithms and AutoTSAD, we use the [manually-tuned hyperparame
 <div style="width: 100%; overflow: hidden;">
   <div style="width: 49%; float: left;">
 
-  ![Detection quality comparison using Range-ROC-AUC metric](docs/figures/quality-range-roc-auc.png)
+  ![Detection quality comparison using Range-PR-AUC metric](docs/figures/quality-range-pr-auc.png)
   ![Detection quality comparison using Range-PR-VUS metric](docs/figures/quality-range-pr-vus.png)
+  ![Detection quality comparison using PR-AUC metric](docs/figures/quality-pr-auc.png)
 
   </div>
   <div style="margin-left: 51%;">
 
+  ![Detection quality comparison using Range-ROC-AUC metric](docs/figures/quality-range-roc-auc.png)
   ![Detection quality comparison using Range-ROC-VUS metric](docs/figures/quality-range-roc-vus.png)
   ![Detection quality comparison using ROC-AUC metric](docs/figures/quality-roc-auc.png)
 

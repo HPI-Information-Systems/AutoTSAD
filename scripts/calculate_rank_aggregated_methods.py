@@ -224,25 +224,6 @@ def _calc_aggregated_rankings(experiment_id: int, dataset_id: str, config_id: in
 
             # upload ranking to DB
             with db.begin() as conn:
-                # upload aggregated scores to DB
-                for aggregation_method in combined_scores:
-                    res = conn.execute(insert(db.aggregated_scoring_table).values({
-                        "dataset_id": dataset_id,
-                        "experiment_id": experiment_id
-                    }))
-                    aggregated_scoring_id = res.inserted_primary_key[0]
-
-                    # write back to DB: aggregated scoring scores
-                    df_combined_scoring_scores = pd.DataFrame({"score": combined_scores[aggregation_method]})
-                    df_combined_scoring_scores["aggregated_scoring_id"] = aggregated_scoring_id
-                    df_combined_scoring_scores.index.name = "time"
-                    df_combined_scoring_scores = df_combined_scoring_scores.reset_index()
-                    df_combined_scoring_scores.to_sql(
-                        con=conn, **db.aggregated_scoring_scores_table_meta, if_exists="append", index=False
-                    )
-                    execution_entries[aggregation_method]["aggregated_scoring_id"] = aggregated_scoring_id
-                    print(f"      uploaded aggregated scoring with {aggregation_method} aggregation")
-
                 # create ranking
                 res = conn.execute(insert(db.ranking_table).values({"experiment_id": experiment_id}))
                 ranking_id = res.inserted_primary_key[0]

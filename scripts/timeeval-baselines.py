@@ -30,6 +30,8 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     parser.add_argument("--baselines", type=str, nargs="+",
                         default=[BASELINE_MAX_NAME, BASELINE_MEAN_NAME, "kmeans", "sand"],
                         help="The baselines to compute and upload to the DB.")
+    parser.add_argument("--only-paper-datasets", action="store_true",
+                        help="Use only the datasets described in the paper.")
     return parser.parse_args(args)
 
 
@@ -167,6 +169,8 @@ def main(sys_args: List[str]) -> None:
 
     with engine.begin() as conn:
         df_available_datasets = pd.read_sql_table(table_name="dataset", con=conn, schema="autotsad")
+        if args.only_paper_datasets:
+            df_available_datasets = df_available_datasets[df_available_datasets["paper"] == True]
     df_datasets = pd.merge(df_datasets, df_available_datasets,
                            left_on=["collection", "dataset_name"],
                            right_on=["collection", "name"])
@@ -205,6 +209,9 @@ def main(sys_args: List[str]) -> None:
         df_max["name"] = BASELINE_MAX_NAME
         print(f"{BASELINE_MAX_NAME} baseline results:")
         print(df_max)
+        # df_save = df_max[["collection", "dataset", "algorithm", "hyper_params", "hyper_params_id", *[m.name for m in metrics], "overall_runtime"]]
+        # df_save.to_csv("best-algo-iops-norma.csv", index=False)
+        # print(df_save)
 
         with engine.begin() as conn:
             for _, row in df_max.iterrows():
@@ -255,6 +262,6 @@ def main(sys_args: List[str]) -> None:
 # - 2022-02-21_runtime-benchmark-2-merged
 # - 2023-08-17-timeeval-tsb-uad
 # - 2023-08-18-timeeval-iops-and-norma
-# - 2023-08-25-timeeval-SAND (runtime-benchmark-revision should also do)
+# - 2023-08-25-timeeval-SAND
 if __name__ == '__main__':
     main(sys.argv[1:])
