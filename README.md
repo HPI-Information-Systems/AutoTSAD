@@ -128,8 +128,10 @@ Please make sure that `python`, `pip`, and `java` are accessible in your new env
 3. Install AutoTSAD
 
    ```bash
-   python setup.py install
+   pip install .
    ```
+
+If you want to use the baseline `tsadams`, please a use `git submodule update` to fetch the required dependencies.
 
 ## Usage
 
@@ -159,13 +161,13 @@ Example call:
 $ autotsad run --config-path autotsad.yaml data/timeeval/GutenTAG/ecg-diff-count-1.csv
 
 AutoTSAD v0.2.2
-------------------------                                                                                                 
+------------------------
 CACHING directory=tmp/cache/6da004d6bd0cb6151622649862fcc418
-RESULT directory=tmp/2023-10-17_15-50-20-6da004d6bd0cb6151622649862fcc418                     
+RESULT directory=tmp/2023-10-17_15-50-20-6da004d6bd0cb6151622649862fcc418
 Configuration=
 AutoTSADConfig(
-    general=GeneralSection(                                                                           
-        tmp_path=PosixPath('tmp'),                                                                               
+    general=GeneralSection(
+        tmp_path=PosixPath('tmp'),
         result_path=PosixPath('tmp'),
         TIMESTAMP='2023-10-17_15-50-20',
         cache_key='6da004d6bd0cb6151622649862fcc418',
@@ -191,11 +193,11 @@ please only change them if you know what you are doing.
 You can specify all configuration settings (see configuration file) also via environment variables with the prefix `AUTOTSAD`.
 Examples:
 
-- Change the folder for temporary files and the cache `config.general.tmp_path`:  
+- Change the folder for temporary files and the cache `config.general.tmp_path`:
   `AUTOTSAD__GENERAL__TMP_PATH=/tmp/custom-folder`
-- Increase parallelism `config.general.n_jobs`:  
+- Increase parallelism `config.general.n_jobs`:
   `AUTOTSAD__GENERAL__N_JOBS=10`
-- Disable hyperparameter optimization steps `config.optimization.disabled`:  
+- Disable hyperparameter optimization steps `config.optimization.disabled`:
   `AUTOTSAD__OPTIMIZATION__DISABLED=true`
 
 ### Shell Completion
