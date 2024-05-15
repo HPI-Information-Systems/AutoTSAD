@@ -1,6 +1,7 @@
 /results
 /results-*
 tmp*
+tmp-*
 timeeval_experiments/results
 **/*.log
 .streamlit/secrets.toml

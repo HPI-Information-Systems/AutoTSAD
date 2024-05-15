@@ -1,22 +1,22 @@
 general:
   tmp_path: tmp
   result_path: tmp
-  logging_level: 0
+  logging_level: 10
   timer_logging_level: 20
   progress: on
   use_timer: yes
   seed: 2
   max_algorithm_instances: 6
   algorithm_selection_method: aggregated-minimum-influence
-  score_normalization_method: minmax
-  score_aggregation_method: custom
+  score_normalization_method: gaussian
+  score_aggregation_method: max
   plot_final_scores: yes
-  compute_all_combinations: yes
+  compute_all_combinations: no
   training_timeout_s: 300
   testing_timeout_s: 3600
   memory_limit_mb: 1024
   pynisher_resource_enforcer: off
-  n_jobs: 2
+  n_jobs: 1
 #  TRAINING_TIMESERIES_LENGTH:
 #  TRAINING_TIMESERIES_MIN_NO_PERIODS:
 
@@ -39,6 +39,7 @@ data_gen:
   #DATASET_PRUNING_SIMILARITY_THRESHOLD:
   #ANOM_FILTER_BAD_SCORING_MEAN_LIMIT:
   #ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE:
+  disable_cleaning: yes
 
 data_gen_plotting:
   autoperiod: off
@@ -50,7 +51,7 @@ data_gen_plotting:
   regime_overlap_pruning: off
   base_ts: off
   cleaning_algo_scores: off
-  cutouts: off
+  cutouts: on
   truncated_timeseries: off
   injected_anomaly: off
 
@@ -113,3 +114,4 @@ optimization:
   proxy_allowed_quality_deviation: 0.05
   reintroduce_default_params: yes
   disabled: yes
+  init_parameter_set: "timeeval"

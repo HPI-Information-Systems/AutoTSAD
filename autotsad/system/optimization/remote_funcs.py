@@ -16,7 +16,8 @@ from autotsad.system.optimization.optuna_auto_storage import OptunaStorageRefere
 from autotsad.system.optimization.optuna_early_stopping_callback import EarlyStoppingCallback
 from autotsad.system.optimization.search_space import SearchSpaceState
 from autotsad.system.pynisher import pynish_func, PynisherException
-from autotsad.tsad_algorithms.interop import params_timeeval, params_from_trial, params_default, exec_algo
+from autotsad.tsad_algorithms.interop import params_timeeval, params_from_trial, params_default, exec_algo, \
+    params_bad_default
 
 
 def timeeval_params_job(algorithm: str,
@@ -124,9 +125,9 @@ def study_job(algorithm: str,
             seed=general_config.seed
         )
         study = optuna.create_study(
-            study_name=f"{algorithm}-{dataset.name}_study",
             storage=storage,
             sampler=sampler,
+            study_name=f"{algorithm}-{dataset.name}_study",
             direction="maximize",
             load_if_exists=True,
         )
@@ -136,11 +137,17 @@ def study_job(algorithm: str,
             study.set_user_attr(k, v)
 
         if len(study.trials) == 0:
-            # aid search with two good guesses for parameters
-            # study.enqueue_trial(asdict(params_default(algorithm)),
-            #                     user_attrs={"tag": "default"})
-            study.enqueue_trial(asdict(params_timeeval(algorithm, period_size=dataset.period_size)),
-                                user_attrs={"tag": "timeeval"})
+            # initialize hyperparameter search using known parameter settings:
+            # aid search with good guesses for parameters
+            if optimization_config.init_parameter_set in ("all", "default"):
+                study.enqueue_trial(asdict(params_default(algorithm)),
+                                    user_attrs={"tag": "default"})
+            if optimization_config.init_parameter_set in ("all", "bad-default"):
+                study.enqueue_trial(asdict(params_bad_default(algorithm)),
+                                    user_attrs={"tag": "bad-default"})
+            if optimization_config.init_parameter_set in ("all", "timeeval"):
+                study.enqueue_trial(asdict(params_timeeval(algorithm, period_size=dataset.period_size)),
+                                    user_attrs={"tag": "timeeval"})
             # add additional seed parameters
             for params in seed_params:
                 study.enqueue_trial(params,

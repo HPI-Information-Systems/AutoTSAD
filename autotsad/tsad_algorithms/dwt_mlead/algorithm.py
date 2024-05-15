@@ -35,6 +35,13 @@ class CustomParameters:
             start_level=3,
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            quantile_epsilon=0.01,
+            start_level=1,
+        )
+
 
 def main(data: np.ndarray,
          params: CustomParameters = CustomParameters(),

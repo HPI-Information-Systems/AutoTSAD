@@ -12,7 +12,7 @@ from autotsad.config import ALGORITHMS, SCORE_NORMALIZATION_METHODS, SCORE_AGGRE
 from autotsad.system.execution.aggregation import normalize_scores, aggregate_scores
 from autotsad.util import mask_to_slices
 
-_baselines = ["default-baseline", "k-Means", "SAND", "best-algo", "mean-algo", "k-Means (TimeEval)", "SAND (TimeEval)"]
+_baselines = ["best-algo", "mean-algo", "k-Means (TimeEval)", "SAND (TimeEval)", "cae-ensemble"]
 _ranking_methods = sorted(_baselines + [
     f"{rm}-{nm}-{am}"
     for rm in (list(ALGORITHM_SELECTION_METHODS) + ["aggregated-minimum-influence", "aggregated-robust-borda"])

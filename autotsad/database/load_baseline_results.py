@@ -20,7 +20,8 @@ SCORES_FILEPATH = "scores.csv"
 RUNTIME_FILEPATH = "runtime.txt"
 
 
-def _process(baseline_name: str, dataset_id: str, folder: Path, db: Database, delete_existing: bool = False) -> None:
+def _process(baseline_name: str, dataset_id: str, folder: Path, db_url: str, delete_existing: bool = False) -> None:
+    db = Database(db_url)
     print(f"Processing {baseline_name} on {dataset_id}...")
 
     metric_filepath = folder / METRIC_FILEPATH
@@ -126,10 +127,14 @@ def load_baseline_results(db: Database,
             con=conn
         )
         print(f"Found {len(df_existing)} existing baseline executions in the database.")
+    df_existing = df_existing.set_index(["name", "dataset_id"])
 
     # parse folder structure to discover baselines results
     results_to_load = []
     for folder in path.iterdir():
+        if "failed" in folder.name:
+            print(f"Skipping failed experiment {folder.name}")
+            continue
         if not folder.is_dir() or not re.match("(.*-)?[0-9a-f]{32}-.*", folder.name):
             continue
 
@@ -142,14 +147,14 @@ def load_baseline_results(db: Database,
         name = f"{name}-{folder.name.split('-')[-1].strip()}"
         dataset_id = folder.name.split('-')[-2].strip()
 
-        if skip_existing_experiments and (name, dataset_id) in df_existing.values:
-            print(f"Skipping existing experiment {baseline_name} - {dataset_id}")
+        if skip_existing_experiments and (name, dataset_id) in df_existing.index:
+            print(f"Skipping existing experiment {name} - {dataset_id}")
             continue
 
         results_to_load.append((name, dataset_id, folder))
     print(f"Found {len(results_to_load)} baseline executions to load.")
 
     joblib.Parallel()(
-        joblib.delayed(_process)(baseline_name, dataset_id, folder, db, delete_existing=not skip_existing_experiments)
+        joblib.delayed(_process)(baseline_name, dataset_id, folder, db.url, delete_existing=not skip_existing_experiments)
         for baseline_name, dataset_id, folder in results_to_load
     )

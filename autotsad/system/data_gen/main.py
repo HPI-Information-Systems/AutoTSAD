@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import List, Sequence, Tuple
@@ -7,10 +8,12 @@ from typing import List, Sequence, Tuple
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
-from periodicity_detection.methods.autoperiod import Autoperiod
+from periodicity_detection import number_peaks
+# from periodicity_detection.methods.autoperiod import Autoperiod
 from timeeval.utils.tqdm_joblib import tqdm_joblib
 from tqdm import tqdm
 
+from autotsad.evaluation import evaluate_cleaning
 from .cleaning import clean_base_timeseries
 from .injecting import generate_anomaly_time_series
 from .limiting import limit_base_timeseries, TimeseriesLimiter
@@ -28,17 +31,20 @@ def _get_logger() -> logging.Logger:
 
 
 def analyze_dataset(testdataset: TestDataset) -> List[int]:
-    autoperiod = Autoperiod(
-        use_number_peaks_fallback=True,
-        detrend=True,
-        random_state=42,
-        return_multi=config.data_gen.autoperiod_max_periods,
-        plot=config.data_gen_plotting.autoperiod,
-        acf_hill_steepness=1e6,
-    )
-    periods = autoperiod(testdataset.data)
-    if config.data_gen_plotting.autoperiod:
-        plt.show()
+    # autoperiod = Autoperiod(
+    #     use_number_peaks_fallback=True,
+    #     detrend=True,
+    #     random_state=42,
+    #     return_multi=config.data_gen.autoperiod_max_periods,
+    #     plot=config.data_gen_plotting.autoperiod,
+    #     acf_hill_steepness=1e-3,
+    # )
+    # periods = autoperiod(testdataset.data)
+    # if config.data_gen_plotting.autoperiod:
+    #     plt.show()
+
+    # Use a simpler method for period detection:
+    periods = [number_peaks(testdataset.data, n=100)]
 
     _get_logger().info(f"Dataset characteristics:\nInput shape={testdataset.shape}\nPeriods={periods}")
     return periods
@@ -169,27 +175,44 @@ def main(testdataset: TestDataset, use_gt_for_cleaning: bool = False) -> Trainin
     cleaned_base_ts_cache_path = config.general.cache_dir() / "cleaned-base-ts-collection.pkl"
     limited_base_ts_cache_path = config.general.cache_dir() / "limited-base-ts-collection.pkl"
     train_ts_cache_path = config.general.cache_dir() / "train-ts-collection.pkl"
+    cleaning_metrics_path = config.general.result_dir() / "cleaning-metrics.json"
     config.general.cache_dir().mkdir(parents=True, exist_ok=True)
 
-    if limited_base_ts_cache_path.exists() or cleaned_base_ts_cache_path.exists() or train_ts_cache_path.exists():
-        pass
-    elif base_ts_cache_path.exists():
-        train_collection = TrainingDatasetCollection.load(base_ts_cache_path)
-    else:
-        print("\n# Generating base time series")
-        print("###########################")
-        train_collection = generate_base_ts_collection(testdataset)
-        train_collection.save(base_ts_cache_path)
+    if config.data_gen.disable_cleaning:
+        if cleaned_base_ts_cache_path.exists():
+            train_collection = TrainingDatasetCollection.load(cleaned_base_ts_cache_path)
+        else:
+            # use test time series as the single base time series
+            print("\n# Cleaning disabled: Using target time series")
+            print("###########################")
+            Timers.start("Base TS generation")
+            train_collection = TrainingDatasetCollection.from_base_timeseries(testdataset)
+            train_collection.add_base_ts(np.ones_like(testdataset.data, dtype=np.bool_), period_size=100)
+            train_collection.save(cleaned_base_ts_cache_path)
+            Timers.stop("Base TS generation")
 
-    if limited_base_ts_cache_path.exists() or train_ts_cache_path.exists():
-        pass
-    elif cleaned_base_ts_cache_path.exists():
-        train_collection = TrainingDatasetCollection.load(cleaned_base_ts_cache_path)
     else:
-        print("\n# Cleaning base time series")
-        print("###########################")
-        train_collection = clean_base_timeseries(train_collection, use_gt=use_gt_for_cleaning)
-        train_collection.save(cleaned_base_ts_cache_path)
+        if cleaned_base_ts_cache_path.exists():
+            pass
+        elif base_ts_cache_path.exists():
+            train_collection = TrainingDatasetCollection.load(base_ts_cache_path)
+        else:
+            print("\n# Generating base time series")
+            print("###########################")
+            train_collection = generate_base_ts_collection(testdataset)
+            train_collection.save(base_ts_cache_path)
+
+        if cleaned_base_ts_cache_path.exists():
+            train_collection = TrainingDatasetCollection.load(cleaned_base_ts_cache_path)
+        else:
+            print("\n# Cleaning base time series")
+            print("###########################")
+            train_collection = clean_base_timeseries(train_collection, use_gt=use_gt_for_cleaning)
+            train_collection.save(cleaned_base_ts_cache_path)
+
+    cleaning_metrics = evaluate_cleaning(train_collection, plot=False)
+    with cleaning_metrics_path.open("w") as f:
+        json.dump(cleaning_metrics, f)
 
     if train_ts_cache_path.exists():
         pass

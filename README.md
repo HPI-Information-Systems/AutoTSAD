@@ -131,7 +131,7 @@ Please make sure that `python`, `pip`, and `java` are accessible in your new env
    pip install .
    ```
 
-If you want to use the baseline `tsadams`, please a use `git submodule update` to fetch the required dependencies.
+If you want to use the baseline `tsadams` or `cae-ensemble`, please a use `git submodule update` to fetch the required dependencies.
 
 ## Usage
 

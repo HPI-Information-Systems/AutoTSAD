@@ -14,6 +14,7 @@ def main():
     # dataset_path = Path("../data/sand-data/processed/timeeval/806.csv")
     # dataset_path = Path("../data/benchmark-data/data-processed/univariate/NASA-SMAP/D-8.test.csv")
     # dataset_path = Path("../data/benchmark-data/data-processed/univariate/WebscopeS5/A2Benchmark-22.test.csv")
+    # dataset_path = Path("../data/benchmark-data/data-processed/univariate/TODS-synthetic/collective_global_0.05.test.csv")
     data = TestDataset.from_file(dataset_path)
     # data.data = data.data[:50000]
     # data.label = data.label[:50000]

@@ -10,7 +10,7 @@ def prepare_tsadams_venv(env_dir: Path = Path(".venv-tsadams"), use_existing: bo
     if not env_dir.name.startswith(".venv"):
         raise ValueError(f"env_dir must start with '.venv' but is {env_dir}!")
     if not env_dir.exists():
-        use_existing=False
+        use_existing = False
 
     print(f"Creating virtual environment for tsadams in {env_dir}")
     builder = EnvBuilder(system_site_packages=False, clear=not use_existing, symlinks=True, with_pip=True)

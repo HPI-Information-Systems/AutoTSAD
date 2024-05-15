@@ -1,10 +1,11 @@
 #!/bin/zsh
-#SBATCH --job-name="SELECT"
-#SBATCH --cpus-per-task 2
+#SBATCH --job-name="CAE-Ensemble"
+#SBATCH --cpus-per-task 10
 #SBATCH --mem=20G
+#SBATCH --gpus=1
 #SBATCH -t 12:00:00
 #SBATCH -A naumann
-#SBATCH -p magic
+#SBATCH -p sorcery
 #SBATCH --constraint=ARCH:X86
 
 #source ~/.zshrc
@@ -21,9 +22,9 @@ trim() {
 
 echo "Processing Job ${SLURM_JOB_NAME}"
 
-logfile="results-select/${SLURM_JOBID}-screen.log"
-mkdir -p "results-select"
-/hpi/fs00/home/sebastian.schmidl/opt/miniconda3/envs/autotsad/bin/python -m autotsad baselines select --results-path "results-select" "$@" 2>&1 | tee -a "${logfile}"
+logfile="results-cae-ensemble/${SLURM_JOBID}-screen.log"
+mkdir -p "results-cae-ensemble"
+/hpi/fs00/home/sebastian.schmidl/opt/miniconda3/envs/autotsad/bin/python -m autotsad baselines cae-ensemble --results-path "results-cae-ensemble" "$@" 2>&1 | tee -a "${logfile}"
 
 # copy logfile to results-folder
 result_path=$(head -n 20 "${logfile}" | grep -e "RESULT directory" | cut -d '=' -f 2)

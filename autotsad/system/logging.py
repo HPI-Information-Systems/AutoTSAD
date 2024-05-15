@@ -2,6 +2,7 @@ import contextlib
 import logging
 import logging.handlers
 import multiprocessing
+import sys
 from typing import Callable, Generator, Optional, Dict, Any, Union
 
 from autotsad.config import GeneralSection, OptimizationSection
@@ -90,10 +91,15 @@ def setup_logging_from_config(general: GeneralSection, optimization: Optimizatio
                 "filename": filename,
                 "mode": "a",
                 "formatter": "default",
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "stream": sys.stdout,
+                "formatter": "default",
             }
         },
         "root": {
-            "handlers": ["file"],
+            "handlers": ["file", "stdout"],
             "level": "NOTSET",
         },
         "loggers": {

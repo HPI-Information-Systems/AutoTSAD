@@ -16,10 +16,9 @@ from ...config import config
 from ...dataset import BaseTSDataset, TrainingDatasetCollection, TrainingTSDataset
 from ...util import getsize
 
-log = logging.getLogger("autotsad.data_gen.injecting")
-
 
 def generate_anomaly_time_series(base_ts_collection: TrainingDatasetCollection) -> TrainingDatasetCollection:
+    log = logging.getLogger("autotsad.data_gen.injecting")
     new_datasets = TrainingDatasetCollection(base_ts_collection.test_data)
     rng = np.random.default_rng(config.general.seed)
     Timers.start("Anomaly injection")

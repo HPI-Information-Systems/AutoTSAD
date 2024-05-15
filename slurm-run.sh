@@ -2,16 +2,10 @@
 #SBATCH --job-name="AutoTSAD"
 #SBATCH --cpus-per-task 2
 #SBATCH --mem=6G
-#SBATCH -t 4-23:59:59
+#SBATCH -t 12:00:00
 #SBATCH -A naumann
 #SBATCH -p magic
 #SBATCH --constraint=ARCH:X86
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=sebastian.schmidl@hpi.de
-##SBATCH --mem-per-cpu 2G
-##SBATCH --constraint=CPU_EXT:AVX2
-##SBATCH --exclusive
-##SBATCH -w node-03
 
 #source ~/.zshrc
 set -o pipefail  # trace exit code of failed piped commands
@@ -53,12 +47,12 @@ mkdir -p "${AUTOTSAD__GENERAL__RESULT_PATH}"
 exit_code=$?
 
 # create tarball of results
-mkdir -p "${HOME}/projects/holistic-tsad/results-p1"
+mkdir -p "${HOME}/projects/holistic-tsad/results-autotsad"
 if [[ ${exit_code} -ne 0 ]]; then
   echo "Job failed with exit code ${exit_code}"
-  tarball="${HOME}/projects/holistic-tsad/results-p1/$(date --rfc-3339=date)-${SLURM_JOBID}-${SLURM_JOB_NAME} (failed).tar.gz"
+  tarball="${HOME}/projects/holistic-tsad/results-autotsad/$(date --rfc-3339=date)-${SLURM_JOBID}-${SLURM_JOB_NAME} (failed).tar.gz"
 else
-  tarball="${HOME}/projects/holistic-tsad/results-p1/$(date --rfc-3339=date)-${SLURM_JOBID}-${SLURM_JOB_NAME}.tar.gz"
+  tarball="${HOME}/projects/holistic-tsad/results-autotsad/$(date --rfc-3339=date)-${SLURM_JOBID}-${SLURM_JOB_NAME}.tar.gz"
 fi
 result_path=$(head -n 20 "${logfile}" | grep -e "RESULT directory" | cut -d '=' -f 2)
 result_path=$(trim "${result_path}")

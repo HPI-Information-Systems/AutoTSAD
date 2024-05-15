@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Dict, Sequence, Tuple, List
 
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, euclidean_distances
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, euclidean_distances, \
+    precision_recall_fscore_support
 from timeeval import Metric
 from timeeval.metrics import RangePrecision, RangeRecall, RangeFScore, RangePrAUC, RangeRocAUC, PrecisionAtK
 from timeeval.metrics.thresholding import ThresholdingStrategy, PercentileThresholding, SigmaThresholding, \
@@ -13,7 +14,7 @@ from timeeval.utils.tqdm_joblib import tqdm_joblib
 from tqdm import tqdm
 
 from .config import METRIC_MAPPING
-from .dataset import TestDataset
+from .dataset import TestDataset, TrainingDatasetCollection
 from .system.execution.aggregation import aggregate_scores, load_scores, algorithm_instances
 from .system.execution.algo_selection import _annotation_overlap_distances
 from .util import mask_to_slices
@@ -154,6 +155,43 @@ def compute_metrics_old(labels: np.ndarray, scores: np.ndarray,
         diversity = results["variety"]
         results["SC-score"] = (2 * quality * diversity) / (quality + diversity)
     return results
+
+
+def evaluate_cleaning(dataset_collection: TrainingDatasetCollection, plot: bool = False) -> List[Dict[str, float]]:
+    true_anomalies = dataset_collection.test_data.label
+    dataset_groups = {}
+    for d in dataset_collection:
+        if d.period_size not in dataset_groups:
+            dataset_groups[d.period_size] = []
+        dataset_groups[d.period_size].append(d.mask)
+    metrics = []
+    for period in dataset_groups:
+        masked_data = np.bitwise_or.reduce([x for x in dataset_groups[period]])
+        # pred_anomalies = np.bitwise_and(true_anomalies, ~masked_data)
+        pred_anomalies = ~masked_data
+        precision, recall, f10, _ = precision_recall_fscore_support(true_anomalies, pred_anomalies, beta=10, average="binary")
+        f1 = f1_score(true_anomalies, pred_anomalies, average="binary")
+        metrics.append({"precision": precision, "recall": recall, "f1": f1, "f10": f10})
+
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, axs = plt.subplots(3, 1, squeeze=False, sharex="col")
+            axs[0, 0].set_title(f"original TS period={period}")
+            dataset_collection.test_data.plot(axs[0, 0])
+
+            for d in dataset_collection:
+                data = dataset_collection.test_data.data.copy()
+                data[~d.mask] = np.nan
+                axs[1, 0].plot(data, label=d.name)
+            axs[1, 0].set_title("Masked TS")
+            axs[1, 0].legend()
+
+            axs[2, 0].plot(true_anomalies, label="true anomalies")
+            axs[2, 0].plot(pred_anomalies, label="masked anomalies")
+            axs[2, 0].legend()
+            plt.show()
+
+    return metrics
 
 
 def compute_metrics(y_label: np.ndarray, y_score: np.ndarray, y_pred: np.ndarray, n_jobs: int = 1) -> Dict[str, float]:

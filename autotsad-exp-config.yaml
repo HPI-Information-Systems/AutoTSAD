@@ -39,6 +39,7 @@ data_gen:
   #DATASET_PRUNING_SIMILARITY_THRESHOLD:
   #ANOM_FILTER_BAD_SCORING_MEAN_LIMIT:
   #ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE:
+  disable_cleaning: no
 
 data_gen_plotting:
   autoperiod: off
@@ -115,4 +116,5 @@ optimization:
     - grammarviz
   proxy_allowed_quality_deviation: 0.05
   reintroduce_default_params: yes
-  disabled: no
+  disabled: yes
+  init_parameter_set: "timeeval"

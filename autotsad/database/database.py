@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from typing import Iterator
+from typing import ContextManager
 
-from sqlalchemy import create_engine as create_pg_engine, Engine, MetaData, Table, Connection
+from sqlalchemy import Connection, Engine, MetaData, Table
+from sqlalchemy import create_engine as create_pg_engine
 
 
 def engine_url_from_args(args: argparse.Namespace) -> str:
@@ -33,12 +34,16 @@ class Database:
     experiment_table_meta = {"name": "experiment", "schema": schema}
     algorithm_scoring_table_meta = {"name": "algorithm_scoring", "schema": schema}
     scoring_table_meta = {"name": "scoring", "schema": schema}
-    algorithm_execution_table_meta = {"name": "autotsad_algorithm_execution", "schema": schema}
+    algorithm_execution_table_meta = {
+        "name": "autotsad_algorithm_execution",
+        "schema": schema,
+    }
     ranking_table_meta = {"name": "algorithm_ranking", "schema": schema}
     ranking_entry_table_meta = {"name": "algorithm_ranking_entry", "schema": schema}
     autotsad_execution_table_meta = {"name": "autotsad_execution", "schema": schema}
     baseline_execution_table_meta = {"name": "baseline_execution", "schema": schema}
     runtime_trace_table_meta = {"name": "runtime_trace", "schema": schema}
+    cleaning_metrics_table_meta = {"name": "cleaning_metrics", "schema": schema}
 
     @staticmethod
     def create_engine(url: str, isolation_level: str = "SERIALIZABLE") -> Engine:
@@ -53,35 +58,90 @@ class Database:
         self.engine = create_engine(db_url, isolation_level)
 
         metadata_obj = MetaData()
-        self.configuration_table = Table("configuration", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.dataset_table = Table("dataset", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.timeseries_table = Table("timeseries", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.experiment_table = Table("experiment", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.algorithm_scoring_table = Table("algorithm_scoring", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.scoring_table = Table("scoring", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.algorithm_execution_table = Table("autotsad_algorithm_execution", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.ranking_table = Table("algorithm_ranking", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.ranking_entry_table = Table("algorithm_ranking_entry", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.autotsad_execution_table = Table("autotsad_execution", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.baseline_execution_table = Table("baseline_execution", metadata_obj, autoload_with=self.engine, schema=self.schema)
-        self.runtime_trace_table = Table("runtime_trace", metadata_obj, autoload_with=self.engine, schema=self.schema)
+        self.configuration_table = Table(
+            "configuration", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.dataset_table = Table(
+            "dataset", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.timeseries_table = Table(
+            "timeseries", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.experiment_table = Table(
+            "experiment", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.algorithm_scoring_table = Table(
+            "algorithm_scoring",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.scoring_table = Table(
+            "scoring", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.algorithm_execution_table = Table(
+            "autotsad_algorithm_execution",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.ranking_table = Table(
+            "algorithm_ranking",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.ranking_entry_table = Table(
+            "algorithm_ranking_entry",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.autotsad_execution_table = Table(
+            "autotsad_execution",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.baseline_execution_table = Table(
+            "baseline_execution",
+            metadata_obj,
+            autoload_with=self.engine,
+            schema=self.schema,
+        )
+        self.runtime_trace_table = Table(
+            "runtime_trace", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
+        self.cleaning_metrics_table = Table(
+            "cleaning_metrics", metadata_obj, autoload_with=self.engine, schema=self.schema
+        )
 
-    def begin(self) -> Iterator[Connection]:
+    def begin(self) -> ContextManager[Connection]:
         return self.engine.begin()
 
     def load_test_dataset(self, dataset_id: str) -> "TestDataset":
         import pandas as pd
-        from autotsad.dataset import TestDataset
         from sqlalchemy import select
 
+        from autotsad.dataset import TestDataset
+
         with self.begin() as conn:
-            df = pd.read_sql(select(
-                self.timeseries_table.c.time, self.timeseries_table.c.value, self.timeseries_table.c.is_anomaly
-            ).where(self.timeseries_table.c.dataset_id == dataset_id), conn)
+            df = pd.read_sql(
+                select(
+                    self.timeseries_table.c.time,
+                    self.timeseries_table.c.value,
+                    self.timeseries_table.c.is_anomaly,
+                ).where(self.timeseries_table.c.dataset_id == dataset_id),
+                conn,
+            )
             if len(df) == 0:
-                raise ValueError(f"Dataset with ID {dataset_id} does not exist in the database!")
+                raise ValueError(
+                    f"Dataset with ID {dataset_id} does not exist in the database!"
+                )
             dataset_name = conn.execute(
-                select(self.dataset_table.c.name).where(self.dataset_table.c.hexhash == dataset_id)
+                select(self.dataset_table.c.name).where(
+                    self.dataset_table.c.hexhash == dataset_id
+                )
             ).first()[0]
 
         df = df.sort_values("time")

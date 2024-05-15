@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, Literal, List, Dict, Any, Generator, Union
+from typing import Tuple, Optional, List, Dict, Any, Generator, Union
 
 import pandas as pd
 from sqlalchemy import select, text, Connection, Select
@@ -107,9 +107,9 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
         return _query(query)
 
-    def list_datasets(self, filters: Optional[Dict[str, List[Any]]] = None, only_paper_datasets: bool = False) -> pd.DataFrame:
+    def list_datasets(self, filters: Optional[Dict[str, List[Any]]] = None, only_paper_datasets: bool = False, revision_datasets: bool = False) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _list_datasets(filters: Optional[Dict[str, List[Any]]], only_paper_datasets: bool) -> pd.DataFrame:
+        def _list_datasets(filters: Optional[Dict[str, List[Any]]], only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             if filters:
                 with self._instance.begin() as conn:
                     query = select(self._instance.dataset_table.c.name, self._instance.dataset_table.c.collection).where(
@@ -118,6 +118,8 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                     query = self._add_autotsad_filters(query, filters)
                     if only_paper_datasets:
                         query = query.where(self._instance.dataset_table.c.paper == True)
+                    if not revision_datasets:
+                        query = query.where(self._instance.dataset_table.c.revision == False)
                     query = query.order_by(self._instance.dataset_table.c.collection, self._instance.dataset_table.c.name)
                     query = query.distinct()
                     return pd.read_sql(query, conn)
@@ -127,17 +129,17 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                         select(self._instance.dataset_table.c.name, self._instance.dataset_table.c.collection), conn
                     )
 
-        return _list_datasets(filters, only_paper_datasets)
+        return _list_datasets(filters, only_paper_datasets, revision_datasets)
 
     def dataset_collections_for_paper(self) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=1)
         def _dataset_collections_for_paper() -> pd.DataFrame:
             with self._instance.begin() as conn:
                 return pd.read_sql(
-                    text("""select collection, count(*) as "datasets"
+                    text("""select collection, revision, count(*) as "datasets"
                             from dataset
                             where paper = True
-                            group by collection
+                            group by collection, revision
                             order by count(*) desc;"""),
                     conn
                 )
@@ -148,7 +150,9 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=1)
         def _list_autotsad_versions() -> List[str]:
             with self._instance.begin() as conn:
-                results = conn.execute(text("SELECT DISTINCT autotsad_version FROM autotsad_execution")).fetchall()
+                results = conn.execute(text(
+                    "SELECT DISTINCT autotsad_version FROM autotsad_execution order by autotsad_version"
+                )).fetchall()
                 if len(results) == 1:
                     return results[0]
                 else:
@@ -236,10 +240,12 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
     def all_aggregated_results(self, filters: Dict[str, List[Any]],
                                only_paper_datasets: bool = False,
+                               revision_datasets: bool = False,
                                only_paper_methods: bool = False,
-                               exclude_super_ensembles: bool = False) -> pd.DataFrame:
+                               exclude_super_ensembles: bool = False,
+                               ) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _all_aggregated_results(filters: Dict[str, List[Any]], only_paper_datasets: bool = False) -> pd.DataFrame:
+        def _all_aggregated_results(filters: Dict[str, List[Any]], only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             with self._instance.begin() as conn:
                 autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
 
@@ -251,6 +257,10 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                 if only_paper_datasets:
                     autotsad_filter_clauses += " and d.paper = True"
                     baseline_filter_clauses += " and d.paper = True"
+
+                if not revision_datasets:
+                    autotsad_filter_clauses += " and d.revision = False"
+                    baseline_filter_clauses += " and d.revision = False"
 
                 return pd.read_sql(text(
                     f"""select "Dataset", "Method", {self._all_metrics(None)},
@@ -273,11 +283,11 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                                      e.name as "Method",
                                      {self._all_metrics()}
                               from dataset d left outer join baseline_execution e on e.dataset_id = d.hexhash
-                              where {baseline_filter_clauses.lstrip(" and")}) as baseline
+                              where true {baseline_filter_clauses}) as baseline
                         order by "Dataset", "range_pr_auc" desc
                     """), conn)
 
-        df = _all_aggregated_results(filters, only_paper_datasets)
+        df = _all_aggregated_results(filters, only_paper_datasets, revision_datasets)
         if only_paper_methods:
             # filter out results that are not meaningful (we don't describe them in the paper)
             # df = df[~df["Method"].str.endswith("_mean")]
@@ -459,14 +469,20 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
 
         return _load_runtime_traces(traces, datasets, config_names, autotsad_versions)
 
-    def load_mean_runtime(self, optim_filters: Dict[str, List[Any]], default_filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
+    def load_mean_runtime(self,
+                          optim_filters: Dict[str, List[Any]],
+                          default_filters: Dict[str, List[Any]],
+                          only_paper_datasets: bool = True,
+                          revision_datasets: bool = False) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _load_mean_runtime(optim_filters: Dict[str, List[Any]], default_filters: Dict[str, List[Any]], only_paper_datasets: bool) -> pd.DataFrame:
+        def _load_mean_runtime(optim_filters: Dict[str, List[Any]], default_filters: Dict[str, List[Any]], only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             default_filter_clauses = self._build_autotsad_filter_clauses(default_filters)
             optim_filter_clauses = self._build_autotsad_filter_clauses(optim_filters)
 
             baseline_filter_clauses = ""
-            for baselines in list(_if_filter(default_filters, "baseline")) + list(_if_filter(optim_filters, "baseline")):
+            default_baselines = set(b for l in _if_filter(default_filters, "baseline") for b in l)
+            optim_baselines = set(b for l in _if_filter(optim_filters, "baseline") for b in l)
+            for baselines in default_baselines.union(optim_baselines):
                 baselines = [f"'{b}'" for b in baselines]
                 baseline_filter_clauses += f" and b.name in ({','.join(baselines)})"
 
@@ -475,19 +491,24 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
                 optim_filter_clauses += " and d.paper = True"
                 baseline_filter_clauses += " and d.paper = True"
 
-            query = f"""select b.name, avg(runtime) as "mean_runtime"
+            if not revision_datasets:
+                default_filter_clauses += " and d.revision = False"
+                optim_filter_clauses += " and d.revision = False"
+                baseline_filter_clauses += " and d.revision = False"
+
+            query = f"""select b.name, avg(runtime) as "mean_runtime", count(*) as "n_datasets"
                         from dataset d, baseline_execution b
                         where d.hexhash = b.dataset_id and b.runtime is not null {baseline_filter_clauses}
                         group by b.name
                         union
-                        select 'AutoTSAD w/ optimization', avg(runtime) as "mean_runtime"
+                        select 'AutoTSAD w/ optimization', avg(runtime) as "mean_runtime", count(*) as "n_datasets"
                         from dataset d, autotsad_execution e, experiment x, configuration c
                         where d.hexhash = e.dataset_id
                             and e.experiment_id = x.id
                             and e.config_id = c.id
                             and e.runtime is not null {optim_filter_clauses}
                         union
-                        select 'AutoTSAD w/o optimization', avg(runtime) as "mean_runtime"
+                        select 'AutoTSAD w/o optimization', avg(runtime) as "mean_runtime", count(*) as "n_datasets"
                         from dataset d, autotsad_execution e, experiment x, configuration c
                         where d.hexhash = e.dataset_id
                             and e.experiment_id = x.id
@@ -496,15 +517,18 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _load_mean_runtime(optim_filters, default_filters, only_paper_datasets)
+        return _load_mean_runtime(optim_filters, default_filters, only_paper_datasets, revision_datasets)
 
-    def load_runtimes(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
+    def load_runtimes(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True,
+                      revision_datasets: bool = False) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=3)
-        def _load_runtimes(filters: Dict[str, List[Any]], only_paper_datasets: bool) -> pd.DataFrame:
+        def _load_runtimes(filters: Dict[str, List[Any]], only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
 
             if only_paper_datasets:
                 autotsad_filter_clauses += " and d.paper = True"
+            if not revision_datasets:
+                autotsad_filter_clauses += " and d.revision = False"
 
             query = f"""select a.name as "dataset_name",
                                a.runtime as "autotsad_runtime",
@@ -519,7 +543,7 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _load_runtimes(filters, only_paper_datasets)
+        return _load_runtimes(filters, only_paper_datasets, revision_datasets)
 
     def load_optimization_variance_results(self, filters: Dict[str, List[Any]], datasets: List[str],
                                            config_names: List[str]) -> pd.DataFrame:
@@ -557,16 +581,19 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
         return _load_optimization_variance_results(filters, datasets, config_names)
 
     def load_optimization_improvements(self, filters: Dict[str, List[Any]], metric: str = "range_pr_auc",
-                                       only_paper_datasets: bool = True) -> pd.DataFrame:
+                                       only_paper_datasets: bool = True, revision_datasets: bool = False) -> pd.DataFrame:
         filters.pop("config_id", None)
         # filters.pop("experiment_id", None)
 
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _load_optimization_improvements(filters: Dict[str, List[Any]], metric: str, only_paper_datasets: bool) -> pd.DataFrame:
+        def _load_optimization_improvements(filters: Dict[str, List[Any]], metric: str, only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
 
             if only_paper_datasets:
                 autotsad_filter_clauses += " and d.paper = True"
+            if not revision_datasets:
+                autotsad_filter_clauses += " and d.revision = False"
+
             sub_query = f"""select distinct d.collection || ' ' || d.name as "dataset", e.{metric}
                            from autotsad_execution e, dataset d, configuration c
                            where e.dataset_id = d.hexhash
@@ -580,15 +607,17 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _load_optimization_improvements(filters, metric, only_paper_datasets)
+        return _load_optimization_improvements(filters, metric, only_paper_datasets, revision_datasets)
 
-    def compute_top1_baseline(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True) -> pd.DataFrame:
+    def compute_top1_baseline(self, filters: Dict[str, List[Any]], only_paper_datasets: bool = True, revision_datasets: bool = False) -> pd.DataFrame:
         @cache_data(ttl=self._ttl, persist=self._persist, max_entries=5)
-        def _compute_top1_baseline(filters: Dict[str, List[Any]], only_paper_datasets: bool) -> pd.DataFrame:
+        def _compute_top1_baseline(filters: Dict[str, List[Any]], only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
             autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
 
             if only_paper_datasets:
                 autotsad_filter_clauses += " and d.paper = True"
+            if not revision_datasets:
+                autotsad_filter_clauses += " and d.revision = False"
 
             query = f"""select d.collection || ' ' || d.name as "Dataset",
                                'AutoTSAD Top-1' as "Method Type", 'top-1' as "Method",
@@ -607,4 +636,31 @@ class AutoTSADConnection(ExperimentalBaseConnection[Database]):
             with self._instance.begin() as conn:
                 return pd.read_sql(text(query), conn)
 
-        return _compute_top1_baseline(filters, only_paper_datasets)
+        return _compute_top1_baseline(filters, only_paper_datasets, revision_datasets)
+
+    def cleaning_metrics(self,
+                         filters: Dict[str, List[Any]],
+                         metric: str = "recall",
+                         only_paper_datasets: bool = True,
+                         revision_datasets: bool = False) -> pd.DataFrame:
+        if metric not in ("recall", "precision", "f1", "f10"):
+            raise ValueError(f"Invalid metric {metric}. Supported metrics are 'recall', 'precision', 'f1', and 'f10'.")
+
+        @cache_data(ttl=self._ttl, persist=self._persist, max_entries=1)
+        def _cleaning_metrics(filters: Dict[str, List[Any]], metric: str, only_paper_datasets: bool, revision_datasets: bool) -> pd.DataFrame:
+            autotsad_filter_clauses = self._build_autotsad_filter_clauses(filters)
+
+            if only_paper_datasets:
+                autotsad_filter_clauses += " and d.paper = True"
+            if not revision_datasets:
+                autotsad_filter_clauses += " and d.revision = False"
+
+            query = f"""select e.experiment_id, e.dataset_id, e.autotsad_version, m.{metric}
+                        from cleaning_metrics m, autotsad_execution e, dataset d
+                        where e.experiment_id = m.experiment_id
+                          and e.dataset_id = d.hexhash {autotsad_filter_clauses};"""
+
+            with self._instance.begin() as conn:
+                return pd.read_sql(text(query), conn)
+
+        return _cleaning_metrics(filters, metric, only_paper_datasets, revision_datasets)

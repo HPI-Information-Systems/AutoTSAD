@@ -19,7 +19,7 @@ st.set_page_config(
     layout="wide",
 )
 
-conn = st.experimental_connection("autotsad", type=AutoTSADConnection)
+conn = st.connection("autotsad", type=AutoTSADConnection)
 
 
 @st.cache_data

@@ -1,14 +1,9 @@
 #!/bin/zsh
-#SBATCH --job-name="SELECT"
-#SBATCH --cpus-per-task 2
-#SBATCH --mem=20G
-#SBATCH -t 12:00:00
-#SBATCH -A naumann
-#SBATCH -p magic
-#SBATCH --constraint=ARCH:X86
+# run with: export SLURM_JOB_NAME="SELECT ..."; ./run-select.sh --n-jobs 1 --strategy <horizontal/vertical> path/to/data.csv 2>&1 | tee select.log
 
-#source ~/.zshrc
 set -o pipefail  # trace exit code of failed piped commands
+
+pid=$$
 
 trim() {
     local var="$*"
@@ -19,14 +14,23 @@ trim() {
     printf '%s' "$var"
 }
 
+if [ -z "${SLURM_JOB_NAME-}" ]; then
+  echo "${SLURM_JOB_NAME} not set!"
+  exit 1
+fi
+if [ -z "${SLURM_JOBID-}" ]; then
+  echo "${SLURM_JOBID} not set, using PID!"
+  SLURM_JOBID=${pid}
+fi
+
 echo "Processing Job ${SLURM_JOB_NAME}"
 
 logfile="results-select/${SLURM_JOBID}-screen.log"
 mkdir -p "results-select"
-/hpi/fs00/home/sebastian.schmidl/opt/miniconda3/envs/autotsad/bin/python -m autotsad baselines select --results-path "results-select" "$@" 2>&1 | tee -a "${logfile}"
+python -m autotsad baselines select --results-path "results-select" "$@" 2>&1 | tee -a "${logfile}"
 
-# copy logfile to results-folder
+# move logfile to results-folder
 result_path=$(head -n 20 "${logfile}" | grep -e "RESULT directory" | cut -d '=' -f 2)
 result_path=$(trim "${result_path}")
-cp "${logfile}" "${result_path}/screen.log"
+mv "${logfile}" "${result_path}/screen.log"
 echo "$(hostname)" > "${result_path}/hostname.txt"

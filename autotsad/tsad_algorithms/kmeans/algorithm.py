@@ -29,8 +29,15 @@ class CustomParameters:
     @staticmethod
     def timeeval(period_size: int) -> CustomParameters:
         return CustomParameters(
-            window_size=100,  # guesstimate, actually: AnomalyLengthHeuristic(agg_type='max')
             n_clusters=50,
+            window_size=100,  # guesstimate, actually: AnomalyLengthHeuristic(agg_type='max')
+        )
+
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            n_clusters=2,
+            window_size=10,
         )
 
 

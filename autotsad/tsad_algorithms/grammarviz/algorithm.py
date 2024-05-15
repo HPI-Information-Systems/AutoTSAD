@@ -47,6 +47,15 @@ class CustomParameters:
             alphabet_size=6,
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            anomaly_window_size=10,
+            paa_transform_size=2,
+            alphabet_size=3,
+            normalization_threshold=0.1
+        )
+
 
 def post_grammarviz(algorithm_parameter: Union[np.ndarray, Path]) -> np.ndarray:
     if isinstance(algorithm_parameter, np.ndarray):

@@ -39,6 +39,7 @@ data_gen:
   #ANOM_FILTER_BAD_SCORING_MEAN_LIMIT:
   #ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE:
   #anom_filter_voting_threshold:
+  #disable_cleaning
 data_gen_plotting:
   #autoperiod:
   #profile_area:
@@ -67,6 +68,8 @@ optimization:
   #stop_heuristic_optuna:
   #proxy_allowed_quality_deviation:
   #algorithms:
+  #disabled:
+  #init_parameter_set:
 consolidation:
   #param_selection_strategy:
   #param_selection_best_quality_epsilon:
@@ -90,4 +93,3 @@ anomaly:
   #skip_dataset_less_than_desired_anomalies:
   #skip_dataset_over_contamination_threshold:
   #reintroduce_default_params:
-  #disabled:

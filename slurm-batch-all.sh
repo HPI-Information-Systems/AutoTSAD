@@ -1,6 +1,7 @@
 #!/bin/zsh
 
 datasets=(
+# tranche 1
   "IOPS/KPI-a8c06b47-cc41-3738-9110-12df0ee4c721"
   "IOPS/KPI-c69a50cf-ee03-3bd7-831e-407d36c7ee91"
   "IOPS/KPI-05f10d3a-239c-3bef-9bdc-a2feeb0037aa"
@@ -21,10 +22,10 @@ datasets=(
   "KDD-TSAD/174_UCR_Anomaly_insectEPG2"
   "KDD-TSAD/202_UCR_Anomaly_CHARISfive"
   "KDD-TSAD/208_UCR_Anomaly_CHARISten"
-  "MGAB/3"
-  "MGAB/6"
   "MGAB/2"
+  "MGAB/3"
   "MGAB/4"
+  "MGAB/6"
   "NAB/art_increase_spike_density"
   "NAB/ec2_network_in_257a54"
   "NAB/Twitter_volume_AMZN"
@@ -57,10 +58,10 @@ datasets=(
   "NASA-SMAP/A-1"
   "NormA/Discords_annsgun"
   "NormA/Discords_dutch_power_demand"
-  "NormA/SinusRW_Length_106000_AnomalyL_100_AnomalyN_60_NoisePerc_0"
   "NormA/Discords_marotta_valve_tek_14"
-  "NormA/SinusRW_Length_104000_AnomalyL_200_AnomalyN_20_NoisePerc_0"
   "NormA/Discords_marotta_valve_tek_17"
+  "NormA/SinusRW_Length_106000_AnomalyL_100_AnomalyN_60_NoisePerc_0"
+  "NormA/SinusRW_Length_104000_AnomalyL_200_AnomalyN_20_NoisePerc_0"
   "NormA/SinusRW_Length_108000_AnomalyL_200_AnomalyN_40_NoisePerc_0"
   "TSB-UAD-artificial/-37_2_0.02_25"
   "TSB-UAD-artificial/-69_2_0.02_15"
@@ -86,9 +87,70 @@ datasets=(
   "WebscopeS5/A4Benchmark-2"
   "WebscopeS5/A3Benchmark-54"
   "WebscopeS5/A3Benchmark-18"
+# tranche 2
+  "IOPS/KPI-6a757df4-95e5-3357-8406-165e2bd49360"
+  "IOPS/KPI-7103fa0f-cac4-314f-addc-866190247439"
+  "IOPS/KPI-4d2af31a-9916-3d9f-8a8e-8a268a48c095"
+  "IOPS/KPI-c02607e8-7399-3dde-9d28-8a8da5e5d251"
+  "KDD-TSAD/011_UCR_Anomaly_DISTORTEDECG1"
+  "KDD-TSAD/031_UCR_Anomaly_DISTORTEDInternalBleeding20"
+  "KDD-TSAD/058_UCR_Anomaly_DISTORTEDapneaecg"
+  "KDD-TSAD/074_UCR_Anomaly_DISTORTEDqtdbSel1005V"
+  "KDD-TSAD/095_UCR_Anomaly_NOISECIMIS44AirTemperature4"
+  "KDD-TSAD/098_UCR_Anomaly_NOISEInternalBleeding16"
+  "KDD-TSAD/131_UCR_Anomaly_GP711MarkerLFM5z5"
+  "KDD-TSAD/147_UCR_Anomaly_Lab2Cmac011215EPG3"
+  "KDD-TSAD/154_UCR_Anomaly_PowerDemand3"
+  "KDD-TSAD/232_UCR_Anomaly_mit14134longtermecg"
+  "NAB/Twitter_volume_FB"
+  "NAB/Twitter_volume_GOOG"
+  "NAB/art_daily_flatmiddle"
+  "NAB/cpu_utilization_asg_misconfiguration"
+  "NAB/ec2_cpu_utilization_ac20cd"
+  "NAB/ec2_request_latency_system_failure"
+  "NAB/exchange-3_cpm_results"
+  "NAB/machine_temperature_system_failure"
+  "NAB/occupancy_t4013"
+  "NAB/speed_6005"
+  "NASA-MSL/F-7"
+  "NASA-MSL/P-10"
+  "NASA-MSL/P-11"
+  "NASA-MSL/S-2"
+  "NASA-MSL/T-4"
+  "NASA-SMAP/A-2"
+  "NASA-SMAP/A-3"
+  "NASA-SMAP/A-5"
+  "NASA-SMAP/B-1"
+  "NASA-SMAP/D-8"
+  "NASA-SMAP/E-6"
+  "NASA-SMAP/G-1"
+  "NASA-SMAP/G-2"
+  "NASA-SMAP/G-6"
+  "NASA-SMAP/G-7"
+  "TSB-UAD-synthetic/KDD21_change_segment_resampling_0.02-033_UCR_Anomaly_DISTORTEDInternalBleeding5_4000_6200_6370"
+  "TSB-UAD-synthetic/KDD21_change_segment_resampling_0.02-074_UCR_Anomaly_DISTORTEDqtdbSel1005V_4000_12400_12800"
+  "TSB-UAD-synthetic/KDD21_flat_region_0.02-104_UCR_Anomaly_NOISEapneaecg4_6000_16000_16100"
+  "TSB-UAD-synthetic/KDD21_flip_segment_0.02-210_UCR_Anomaly_Italianpowerdemand_36123_74900_74996"
+  "TSB-UAD-synthetic/YAHOO_add_random_walk_trend_0.2-YahooA3Benchmark-TS75_data"
+  "TSB-UAD-synthetic/YAHOO_add_random_walk_trend_0.2-Yahoo_A1real_32_data"
+  "TSB-UAD-synthetic/YAHOO_change_segment_add_scale_0.02-YahooA3Benchmark-TS22_data"
+  "TSB-UAD-synthetic/YAHOO_change_segment_add_scale_0.02-YahooA4Benchmark-TS28_data"
+  "TSB-UAD-synthetic/YAHOO_flat_region_0.08-YahooA4Benchmark-TS33_data"
+  "TSB-UAD-synthetic/YAHOO_flat_region_0.08-Yahoo_A2synthetic_1_data"
+  "WebscopeS5/A1Benchmark-27"
+  "WebscopeS5/A2Benchmark-41"
+  "WebscopeS5/A2Benchmark-67"
+  "WebscopeS5/A2Benchmark-83"
+  "WebscopeS5/A3Benchmark-44"
+  "WebscopeS5/A3Benchmark-61"
+  "WebscopeS5/A3Benchmark-83"
+  "WebscopeS5/A4Benchmark-67"
+  "WebscopeS5/A4Benchmark-88"
+  "WebscopeS5/A4Benchmark-92"
 )
 
 gutentag_datasets=(
+# tranche 1
   "poly-diff-count-5"
   "rw-combined-diff-2"
   "ecg-same-count-1"
@@ -99,6 +161,17 @@ gutentag_datasets=(
   "poly-length-500"
   "ecg-type-mean"
   "ecg-diff-count-1"
+# tranche 2
+  "cbf-position-middle"
+  "ecg-diff-count-8"
+  "ecg-same-count-2"
+  "ecg-type-trend"
+  "poly-diff-count-2"
+  "poly-length-10"
+  "poly-trend-linear"
+  "rw-combined-diff-1"
+  "sinus-diff-count-2"
+  "sinus-length-50"
 )
 
 sand_datasets=(
@@ -128,34 +201,38 @@ synthetic_datasets=(
 #  "gt-9"
 )
 
+n_jobs=1
+
+# without data cleaning
+export AUTOTSAD__DATA_GEN__DISABLE_CLEANING="no"
 # for default ensemble baseline:
 export AUTOTSAD__OPTIMIZATION__DISABLED="yes"
 # for single-threaded runtime
-export AUTOTSAD__GENERAL__N_JOBS=1
+export AUTOTSAD__GENERAL__N_JOBS="${n_jobs}"
 
 for d in "${datasets[@]}"; do
-  echo "Submitting Job >AutoTSAD ${d} p=1<"
-  sbatch -J "AutoTSAD ${d//\// } p=1" slurm-run.sh "${HOME}/data/benchmark-data/univariate/${d}.test.csv"
+  echo "Submitting Job >AutoTSAD ${d} p=${n_jobs}<"
+  sbatch -J "AutoTSAD ${d//\// } p=${n_jobs}" slurm-run.sh "${HOME}/data/benchmark-data/univariate/${d}.test.csv"
   sleep 0.5
 done
 
 for d in "${gutentag_datasets[@]}"; do
-  echo "Submitting Job >AutoTSAD ${d} p=1<"
-  sbatch -J "AutoTSAD GutenTAG ${d//\// } p=1" slurm-run.sh "${HOME}/data/univariate-anomaly-test-cases/${d}/test.csv"
+  echo "Submitting Job >AutoTSAD ${d} p=${n_jobs}<"
+  sbatch -J "AutoTSAD GutenTAG ${d//\// } p=${n_jobs}" slurm-run.sh "${HOME}/data/univariate-anomaly-test-cases/${d}/test.csv"
   sleep 0.5
 done
 
 for d in "${sand_datasets[@]}"; do
-  echo "Submitting Job >AutoTSAD ${d} p=1<"
-  sbatch -J "AutoTSAD SAND ${d//\// } p=1" slurm-run.sh "${HOME}/data/sand-data/${d}.csv"
+  echo "Submitting Job >AutoTSAD ${d} p=${n_jobs}<"
+  sbatch -J "AutoTSAD SAND ${d//\// } p=${n_jobs}" slurm-run.sh "${HOME}/data/sand-data/${d}.csv"
   sleep 0.5
 done
 
-#for d in "${synthetic_datasets[@]}"; do
-#  echo "Submitting Job >AutoTSAD ${d}<"
-#  sbatch -J "AutoTSAD SAND ${d//\// }" slurm-run.sh "${HOME}/data/autotsad-data/synthetic/${d}.csv"
-#  sleep 0.5
-#done
+# for d in "${synthetic_datasets[@]}"; do
+#   echo "Submitting Job >AutoTSAD ${d}<"
+#   sbatch -J "AutoTSAD synthetic ${d//\// }" slurm-run.sh "${HOME}/data/autotsad-data/synthetic/${d}.csv"
+#   sleep 0.5
+# done
 
 # scaling experiments
 #datasets=(

@@ -15,11 +15,20 @@ from autotsad.tsad_algorithms.interop import exec_algo, params_default
 def execute_base_algorithms(dataset: TestDataset, n_jobs: int = 1) -> Tuple[np.ndarray, np.ndarray]:
     algorithms = ALGORITHMS
     jobs = [(algorithm, params_default(algorithm)) for algorithm in algorithms]
+
+    def safe_exec_algo(dataset, algorithm, algo_params):
+        try:
+            return exec_algo(dataset, algorithm, algo_params)
+        except Exception as e:
+            print(f"Error in {algorithm}: {e}")
+            return np.full((dataset.data.shape[0],), fill_value=np.nan)
+
     with tqdm_joblib(tqdm(desc="Running base algorithms on dataset", total=len(jobs))):
         scores = joblib.Parallel(n_jobs=n_jobs)(
-            joblib.delayed(exec_algo)(dataset, algorithm, algo_params)
+            joblib.delayed(safe_exec_algo)(dataset, algorithm, algo_params)
             for algorithm, algo_params in jobs
         )
+    scores = [s for s in scores if np.all(np.isfinite(s))]
     scores = np.vstack(scores)
     ranks = scores_to_ranks(scores, invert_order=True)
     return scores, ranks

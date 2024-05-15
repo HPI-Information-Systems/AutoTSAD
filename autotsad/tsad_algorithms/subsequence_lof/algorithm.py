@@ -45,6 +45,15 @@ class CustomParameters:
             distance_metric_order=2
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            window_size=10,
+            n_neighbors=1,
+            leaf_size=10,
+            distance_metric_order=1
+        )
+
 
 def main(data: np.ndarray,
          params: CustomParameters = CustomParameters(),

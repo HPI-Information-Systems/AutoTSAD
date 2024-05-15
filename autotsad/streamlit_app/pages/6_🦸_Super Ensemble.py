@@ -19,7 +19,7 @@ st.set_page_config(
     layout="wide",
 )
 
-conn = st.experimental_connection("autotsad", type=AutoTSADConnection)
+conn = st.connection("autotsad", type=AutoTSADConnection)
 filters = {
     "autotsad_version": ["0.2.1"],
     "config_id": ["26a8aa1409ae87761d9d405ff0e49f9e"],

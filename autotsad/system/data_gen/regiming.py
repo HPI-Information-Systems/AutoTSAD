@@ -15,7 +15,6 @@ from ...util import mask_to_slices, invert_slices, slice_lengths
 
 color_vec = ['orange', 'green', 'purple', 'brown', 'pink', 'grey', 'olive', 'cyan', 'yellow', 'black']
 tiny = np.finfo(np.float_).tiny
-log = logging.getLogger("autotsad.data_gen.regiming")
 
 
 def find_best_k(areas: np.ndarray, period: int,
@@ -49,7 +48,7 @@ def find_best_k(areas: np.ndarray, period: int,
 
 def extract_regimes(profiles: np.ndarray, p_idx: np.ndarray, period_size: int,
                     data_gen_config: DataGenerationSection = config.data_gen,
-                    plog: logging.Logger = log) -> Tuple[np.ndarray, np.ndarray]:
+                    plog: logging.Logger = logging.getLogger("autotsad.data_gen.regiming")) -> Tuple[np.ndarray, np.ndarray]:
     regimes = []
     masks = np.zeros_like(profiles, dtype=np.bool_)
     total_min = np.min(profiles[p_idx], axis=0)
@@ -149,7 +148,7 @@ def get_regime_masks(train_collection: TrainingDatasetCollection,
                      general_config: GeneralSection = config.general,
                      data_gen_config: DataGenerationSection = config.data_gen,
                      data_gen_plot_config: DataGenerationPlottingSection = config.data_gen_plotting,
-                     plog: logging.Logger = log) -> np.ndarray:
+                     plog: logging.Logger = logging.getLogger("autotsad.data_gen.regiming")) -> np.ndarray:
     plog.info(f"Processing period {period_size}")
     if period_size > data_gen_config.AUTOPERIOD_MAX_PERIOD_LENGTH:
         plog.warning(

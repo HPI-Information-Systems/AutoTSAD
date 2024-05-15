@@ -34,6 +34,12 @@ class CustomParameters:
             anomaly_window_size=period_size if period_size > 1 else 100,
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            anomaly_window_size=10,
+        )
+
 
 def main(data: np.ndarray,
          params: CustomParameters = CustomParameters(),

@@ -1,3 +1,6 @@
 [submodule "tsadams"]
 	path = tsadams
-	url = https://github.com/CodeLionX/tsad-model-selection.git
+	url = git@github.com:CodeLionX/tsad-model-selection.git
+[submodule "cae-ensemble"]
+	path = cae-ensemble
+	url = git@github.com:CodeLionX/cae-ensemble.git

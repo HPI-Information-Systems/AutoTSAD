@@ -51,6 +51,7 @@ NAME_MAPPING = {
     "select-horizontal": "SELECT Horizontal",
     "select-vertical": "SELECT Vertical",
     "tsadams-mim": "TSADAMS MIM",
+    "cae-ensemble": "CAE-ENSEMBLE",
     # AutoTSAD variants
     "top-1": "Top-1 Method",
     # basic methods
@@ -115,6 +116,7 @@ def _save_figure(save_files_path: Optional[Path], name: str, fig: Figure, legend
 @st.cache_data(max_entries=2, show_spinner=False, persist=False)
 def plot_quality(df_quality: pd.DataFrame, method_order: Sequence[str], metric: str = "range_pr_auc",
                  show_success_rate: bool = False, show_algo_type: bool = False,
+                 tsadams_n_datasets: Optional[int] = None,
                  save_files_path: Optional[Path] = SAVE_PATH, name: str = "quality_comparison") -> Figure:
     plt.rcParams["font.size"] = FONT_SIZE
     figure_width = FIGURE_WIDTH
@@ -152,12 +154,13 @@ def plot_quality(df_quality: pd.DataFrame, method_order: Sequence[str], metric: 
             elif "best" in m: label +="$^{\\uparrow}$"
             elif "top-1" in m: label +="$^{\\uparrow}$"
             elif "tsadams" in m: label += "$^{\\uparrow}$"
+            elif "cae-ensemble" in m: label +="$^{\\otimes}$"
 
         if show_success_rate:
             # plot original label as text left-aligned and use success rate as new label
             a_text = plt.text(text_offset, method_order[::-1].index(m), label, ha="left", va="center")
             extra_artists.append(a_text)
-            n = 40 if "tsadams" in m else df_table[m].count()
+            n = tsadams_n_datasets if "tsadams" in m else df_table[m].count()
             success_text = f"{df_table[m].sum():03d}/{n:03d}"
             label = success_text
 
@@ -384,7 +387,7 @@ def plot_runtime_traces_new(df_runtime_trace_default: pd.DataFrame,
         .agg(runtime_agg).reset_index()
     df_all_runtime_traces = df_all_runtime_traces.sort_values(["n_jobs", "position"])
 
-    axs[1].set_title(f"{runtime_agg} over all datasets $-O$".title())
+    axs[1].set_title(f"{runtime_agg} over 106 datasets $-O$".title())
 
     for n_jobs in df_all_runtime_traces["n_jobs"].unique():
         df = df_all_runtime_traces[df_all_runtime_traces["n_jobs"] == n_jobs].copy()
@@ -523,9 +526,9 @@ def plot_ensembling_strategies(df_quality: pd.DataFrame, method_order: Sequence[
         method_type = df["Method Type"].iloc[0]
         color = method_type_colors[method_type]
         label = adjust_names(m)
-        if "AutoTSAD" in method_type:
-            # put AutoTSAD in front of all method names
-            label = "AutoTSAD " + label
+        # if "AutoTSAD" in method_type:
+        #     # put AutoTSAD in front of all method names
+        #     label = "AutoTSAD " + label
         plt.boxplot(df[metric].values,
                     patch_artist=True, vert=True, meanline=True, showfliers=False, showmeans=True, widths=0.8,
                     whis=(0., 100.),  # whiskers at min/max

@@ -48,6 +48,16 @@ class CustomParameters:
             bootstrap=True
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            window_size=10,
+            n_trees=10,
+            max_features=0.01,
+            max_samples=0.01,
+            bootstrap=False
+        )
+
 
 def main(data: np.ndarray,
          params: CustomParameters = CustomParameters(),

@@ -153,3 +153,8 @@ def params_default(algorithm: str) -> Any:
 def params_timeeval(algorithm: str, period_size: int) -> Any:
     module = _load_algorithm_module(algorithm)
     return module.CustomParameters.timeeval(int(period_size))
+
+
+def params_bad_default(algorithm: str) -> Any:
+    module = _load_algorithm_module(algorithm)
+    return module.CustomParameters.default()

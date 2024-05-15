@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from autotsad._version import __version__
+from autotsad.baselines.cae_ensemble import register_cae_ensemble_arguments, main as run_cae_ensemble
 from autotsad.baselines.select import register_select_arguments, main as run_select
 from autotsad.baselines.tsadams import register_tsadams_arguments, main as run_tsadams
 
@@ -26,12 +27,17 @@ def register_baseline_arguments(parser: argparse.ArgumentParser) -> None:
     parser_tsadams = subparsers.add_parser("tsadams", help="Run tsadams baseline algorithm on a given dataset.")
     register_tsadams_arguments(parser_tsadams)
 
+    parser_case_ensemble = subparsers.add_parser("cae-ensemble", help="Run cae-ensemble baseline algorithm on a given dataset.")
+    register_cae_ensemble_arguments(parser_case_ensemble)
+
 
 def main(args: argparse.Namespace):
     if args.baseline == "select":
         run_select(args)
     elif args.baseline == "tsadams":
         run_tsadams(args)
+    elif args.baseline == "cae-ensemble":
+        run_cae_ensemble(args)
     else:
         raise ValueError(f"Unknown baseline '{args.baseline}' for AutoTSAD baselines!")
 

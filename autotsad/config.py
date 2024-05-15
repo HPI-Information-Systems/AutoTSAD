@@ -7,8 +7,22 @@ from typing import Optional, Any, FrozenSet, Tuple, List, Dict
 
 import numpy as np
 from nx_config import Config, ConfigSection, validate
-from timeeval.metrics import Metric, RangePrAUC, RangeRocAUC, PrAUC, RocAUC, RangePrecision, RangeRecall, PrecisionAtK, \
-    RangeFScore, RangePrVUS, RangeRocVUS, Precision, Recall, F1Score
+from timeeval.metrics import (
+    Metric,
+    RangePrAUC,
+    RangeRocAUC,
+    PrAUC,
+    RocAUC,
+    RangePrecision,
+    RangeRecall,
+    PrecisionAtK,
+    RangeFScore,
+    RangePrVUS,
+    RangeRocVUS,
+    Precision,
+    Recall,
+    F1Score,
+)
 from timeeval.metrics.thresholding import NoThresholding
 
 
@@ -43,15 +57,37 @@ ALGORITHMS: Tuple[str, ...] = (
     "grammarviz",
 )
 ANOMALY_TYPES: Tuple[str, ...] = (
-    "outlier", "compress", "stretch", "noise", "smoothing", "hmirror", "vmirror", "scale", "pattern"
+    "outlier",
+    "compress",
+    "stretch",
+    "noise",
+    "smoothing",
+    "hmirror",
+    "vmirror",
+    "scale",
+    "pattern",
 )
 SCORE_NORMALIZATION_METHODS: Tuple[str, ...] = ("minmax", "gaussian")
 SCORE_AGGREGATION_METHODS: Tuple[str, ...] = ("custom", "max", "mean")
 ALGORITHM_SELECTION_METHODS: Tuple[str, ...] = (
-    "training-coverage", "training-quality", "training-result", "affinity-propagation-clustering",
-    "kmedoids-clustering", "greedy-euclidean", "greedy-annotation-overlap", "mmq-euclidean", "mmq-annotation-overlap",
-    "interchange-euclidean", "interchange-annotation-overlap", "aggregated-minimum-influence"
+    "training-coverage",
+    "training-quality",
+    "training-result",
+    "affinity-propagation-clustering",
+    "kmedoids-clustering",
+    "greedy-euclidean",
+    "greedy-annotation-overlap",
+    "mmq-euclidean",
+    "mmq-annotation-overlap",
+    "interchange-euclidean",
+    "interchange-annotation-overlap",
+    "aggregated-minimum-influence",
 )
+
+BASELINE_MAX_NAME = "best-algo"
+BASELINE_MEAN_NAME = "mean-algo"
+BASELINE_KMEANS_NAME = "k-Means (TimeEval)"
+BASELINE_SAND_NAME = "SAND (TimeEval)"
 
 
 class GeneralSection(ConfigSection):
@@ -191,38 +227,67 @@ class GeneralSection(ConfigSection):
         #     raise ConfigurationError("tmp_path", self.tmp_path,
         #                              f"Temp folder destination {self.tmp_path.parent} does not exist!")
         if self.tmp_path.exists() and not self.tmp_path.parent.is_dir():
-            raise ConfigurationError("tmp_path", self.tmp_path, "Temp path exists, but is not a folder!")
+            raise ConfigurationError(
+                "tmp_path", self.tmp_path, "Temp path exists, but is not a folder!"
+            )
 
         if self.logging_level < logging.NOTSET or self.logging_level > logging.CRITICAL:
-            raise ConfigurationError("logging_level", self.logging_level, "Out of range!")
+            raise ConfigurationError(
+                "logging_level", self.logging_level, "Out of range!"
+            )
 
         if self.max_algorithm_instances < 1:
-            raise ConfigurationError("max_algorithm_instances", self.max_algorithm_instances,
-                                     "A minimum of 1 algorithm instance is required!")
+            raise ConfigurationError(
+                "max_algorithm_instances",
+                self.max_algorithm_instances,
+                "A minimum of 1 algorithm instance is required!",
+            )
         if self.algorithm_selection_method not in ALGORITHM_SELECTION_METHODS:
-            raise ConfigurationError("algorithm_selection_method", self.algorithm_selection_method,
-                                     f"Must be one of {', '.join(ALGORITHM_SELECTION_METHODS)}!")
+            raise ConfigurationError(
+                "algorithm_selection_method",
+                self.algorithm_selection_method,
+                f"Must be one of {', '.join(ALGORITHM_SELECTION_METHODS)}!",
+            )
         if self.score_normalization_method not in SCORE_NORMALIZATION_METHODS:
-            raise ConfigurationError("score_normalization_method", self.score_normalization_method,
-                                     f"Must be one of {', '.join(SCORE_NORMALIZATION_METHODS)}!")
+            raise ConfigurationError(
+                "score_normalization_method",
+                self.score_normalization_method,
+                f"Must be one of {', '.join(SCORE_NORMALIZATION_METHODS)}!",
+            )
         if self.score_aggregation_method not in SCORE_AGGREGATION_METHODS:
-            raise ConfigurationError("score_aggregation_method", self.score_aggregation_method,
-                                     f"Must be one of {', '.join(SCORE_AGGREGATION_METHODS)}!")
+            raise ConfigurationError(
+                "score_aggregation_method",
+                self.score_aggregation_method,
+                f"Must be one of {', '.join(SCORE_AGGREGATION_METHODS)}!",
+            )
 
         if self.TRAINING_TIMESERIES_LENGTH < 500:
-            raise ConfigurationError("TRAINING_TIMESERIES_LENGTH", self.TRAINING_TIMESERIES_LENGTH,
-                                     "Must be at least 500!")
+            raise ConfigurationError(
+                "TRAINING_TIMESERIES_LENGTH",
+                self.TRAINING_TIMESERIES_LENGTH,
+                "Must be at least 500!",
+            )
         if self.TRAINING_TIMESERIES_MIN_NO_PERIODS < 3:
-            raise ConfigurationError("TRAINING_TIMESERIES_MIN_NO_PERIODS", self.TRAINING_TIMESERIES_MIN_NO_PERIODS,
-                                     "Must be at least 3!")
+            raise ConfigurationError(
+                "TRAINING_TIMESERIES_MIN_NO_PERIODS",
+                self.TRAINING_TIMESERIES_MIN_NO_PERIODS,
+                "Must be at least 3!",
+            )
 
         if 0 < self.training_timeout_s < 10:
-            raise ConfigurationError("training_timeout_s", self.training_timeout_s, "Unreasonable duration!")
+            raise ConfigurationError(
+                "training_timeout_s", self.training_timeout_s, "Unreasonable duration!"
+            )
         if 0 < self.testing_timeout_s < 10:
-            raise ConfigurationError("testing_timeout_s", self.testing_timeout_s, "Unreasonable duration!")
+            raise ConfigurationError(
+                "testing_timeout_s", self.testing_timeout_s, "Unreasonable duration!"
+            )
         if 0 < self.memory_limit_mb < 512:
-            raise ConfigurationError("memory_limit_mb", self.memory_limit_mb,
-                                     "Unreasonable memory limit, most algorithms need more memory than 512 MB!")
+            raise ConfigurationError(
+                "memory_limit_mb",
+                self.memory_limit_mb,
+                "Unreasonable memory limit, most algorithms need more memory than 512 MB!",
+            )
 
 
 class DataGenerationSection(ConfigSection):
@@ -278,7 +343,13 @@ class DataGenerationSection(ConfigSection):
     anom_filter_voting_threshold :
         Percentage of anomaly detection algorithms that must agree to keep a dataset region so that it is not
         removed as a potential anomaly.
+    disable_cleaning :
+        Avoid expensive time series analysis and cleaning by taking the target time series without modifications as
+        the base time series for anomaly injection. Already existing anomalies might still be present in the synthetic
+        training data and influence the hyperparameter optimization and ensembling process. Setting this to ``true``
+        is not recommended!
     """
+
     # dataset analysis
     autoperiod_max_periods: int = 8
     AUTOPERIOD_MAX_PERIOD_LENGTH: int = 600
@@ -307,26 +378,46 @@ class DataGenerationSection(ConfigSection):
     ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE: float = 0.5  # stable
     anom_filter_voting_threshold: float = 0.7
 
+    disable_cleaning: bool = False
+
     @validate
     def validate_options(self) -> None:
         if self.autoperiod_max_periods < 1:
-            raise ConfigurationError("autoperiod_max_periods", self.autoperiod_max_periods,
-                                     "At least 1 period is required!")
+            raise ConfigurationError(
+                "autoperiod_max_periods",
+                self.autoperiod_max_periods,
+                "At least 1 period is required!",
+            )
         if self.snippets_max_no < 1:
-            raise ConfigurationError("snippets_max_no", self.snippets_max_no, "At least 1 snippet is required!")
+            raise ConfigurationError(
+                "snippets_max_no",
+                self.snippets_max_no,
+                "At least 1 snippet is required!",
+            )
         if self.snippets_max_no > 10:
-            raise ConfigurationError("snippets_max_no", self.snippets_max_no,
-                                     "More than 8 snippets is unreasonable and very computationally expensive!")
-        for p in ("SNIPPETS_DIST_WINDOW_SIZE_PERCENTAGE", "SNIPPETS_PROFILE_AREA_CHANGE_THRESHOLD",
-                  "regime_max_sampling_overlap", "REGIME_STRONG_PERCENTAGE", "REGIME_CONSOLIDATION_PERCENTAGE",
-                  "ANOM_FILTER_BAD_SCORING_MEAN_LIMIT", "ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE",
-                  "anom_filter_voting_threshold"):
+            raise ConfigurationError(
+                "snippets_max_no",
+                self.snippets_max_no,
+                "More than 8 snippets is unreasonable and very computationally expensive!",
+            )
+        for p in (
+            "SNIPPETS_DIST_WINDOW_SIZE_PERCENTAGE",
+            "SNIPPETS_PROFILE_AREA_CHANGE_THRESHOLD",
+            "regime_max_sampling_overlap",
+            "REGIME_STRONG_PERCENTAGE",
+            "REGIME_CONSOLIDATION_PERCENTAGE",
+            "ANOM_FILTER_BAD_SCORING_MEAN_LIMIT",
+            "ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE",
+            "anom_filter_voting_threshold",
+        ):
             if not (0 <= self[p] <= 1):
                 raise ConfigurationError(p, self[p], "Must be between 0 and 1!")
         if not (1 <= self.anom_filter_scoring_threshold_percentile <= 99):
-            raise ConfigurationError("anom_filter_scoring_threshold_percentile",
-                                     self.anom_filter_scoring_threshold_percentile,
-                                     "Must be between 1 and 99!")
+            raise ConfigurationError(
+                "anom_filter_scoring_threshold_percentile",
+                self.anom_filter_scoring_threshold_percentile,
+                "Must be between 1 and 99!",
+            )
 
 
 class AnomalyGenerationSection(ConfigSection):
@@ -365,9 +456,10 @@ class AnomalyGenerationSection(ConfigSection):
     skip_dataset_over_contamination_threshold :
         Skip datasets for which the contamination threshold would be exceeded by injecting the desired anomalies.
     """
+
     contamination_threshold: float = 0.15
     possible_anomaly_lengths: Tuple[int, ...] = (50, 100)
-    possible_anomaly_length_period_factors: Tuple[float, ...] = (0.5, 1., 1.5, 2.)
+    possible_anomaly_length_period_factors: Tuple[float, ...] = (0.5, 1.0, 1.5, 2.0)
     maximum_anomaly_length_fraction: float = 0.1
     find_position_max_retries: int = 100
     anomaly_section_probas: Tuple[float, ...] = (0.3, 0.4, 0.3)
@@ -383,35 +475,72 @@ class AnomalyGenerationSection(ConfigSection):
 
     def anomaly_lengths(self, period_size: int, data_length: int) -> List[int]:
         lengths = np.unique(
-            list(self.possible_anomaly_lengths) +
-            [int(float(l) * period_size) for l in self.possible_anomaly_length_period_factors]
+            list(self.possible_anomaly_lengths)
+            + [
+                int(float(l) * period_size)
+                for l in self.possible_anomaly_length_period_factors
+            ]
         )
-        return [l for l in lengths if l <= self.maximum_anomaly_length_fraction * data_length]
+        return [
+            l
+            for l in lengths
+            if l <= self.maximum_anomaly_length_fraction * data_length
+        ]
 
     @validate
     def validate_options(self) -> None:
         if self.contamination_threshold > 0.2:
-            raise ConfigurationError("contamination_threshold", self.contamination_threshold,
-                                     "Contamination above 20% does not indicate an anomaly detection use case!")
-        if len(self.possible_anomaly_lengths) == 0 and len(self.possible_anomaly_length_period_factors) == 0:
-            raise ConfigurationError("possible_anomaly_lengths", self.possible_anomaly_lengths,
-                                     "Must have at least one possible anomaly length!")
+            raise ConfigurationError(
+                "contamination_threshold",
+                self.contamination_threshold,
+                "Contamination above 20% does not indicate an anomaly detection use case!",
+            )
+        if (
+            len(self.possible_anomaly_lengths) == 0
+            and len(self.possible_anomaly_length_period_factors) == 0
+        ):
+            raise ConfigurationError(
+                "possible_anomaly_lengths",
+                self.possible_anomaly_lengths,
+                "Must have at least one possible anomaly length!",
+            )
         if any(l <= 0 for l in self.possible_anomaly_lengths) or any(
-                l <= 0 for l in self.possible_anomaly_length_period_factors):
-            raise ConfigurationError("possible_anomaly_lengths", self.possible_anomaly_lengths,
-                                     "Anomaly lengths must be >0!")
-        if self.maximum_anomaly_length_fraction <= 0 or self.maximum_anomaly_length_fraction > self.contamination_threshold:
-            raise ConfigurationError("maximum_anomaly_length_fraction", self.maximum_anomaly_length_fraction,
-                                     f"Must be between 0 and contamination_threshold ({self.contamination_threshold})!")
+            l <= 0 for l in self.possible_anomaly_length_period_factors
+        ):
+            raise ConfigurationError(
+                "possible_anomaly_lengths",
+                self.possible_anomaly_lengths,
+                "Anomaly lengths must be >0!",
+            )
+        if (
+            self.maximum_anomaly_length_fraction <= 0
+            or self.maximum_anomaly_length_fraction > self.contamination_threshold
+        ):
+            raise ConfigurationError(
+                "maximum_anomaly_length_fraction",
+                self.maximum_anomaly_length_fraction,
+                f"Must be between 0 and contamination_threshold ({self.contamination_threshold})!",
+            )
         if len(self.anomaly_section_probas) != 3:
-            raise ConfigurationError("anomaly_section_probas", self.anomaly_section_probas,
-                                     "Must have 3 values for beginning, middle, and end positions!")
-        if not np.isclose(sum(self.anomaly_section_probas), 1.) or any(p < 0 for p in self.anomaly_section_probas):
-            raise ConfigurationError("anomaly_section_probas", self.anomaly_section_probas,
-                                     "Must be >0 and sum up to 1!")
+            raise ConfigurationError(
+                "anomaly_section_probas",
+                self.anomaly_section_probas,
+                "Must have 3 values for beginning, middle, and end positions!",
+            )
+        if not np.isclose(sum(self.anomaly_section_probas), 1.0) or any(
+            p < 0 for p in self.anomaly_section_probas
+        ):
+            raise ConfigurationError(
+                "anomaly_section_probas",
+                self.anomaly_section_probas,
+                "Must be >0 and sum up to 1!",
+            )
         if any(anom not in ANOMALY_TYPES for anom in self.allowed_anomaly_types):
-            raise ConfigurationError("allowed_anomaly_types", self.allowed_anomaly_types,
-                                     f"Must be in {ANOMALY_TYPES}!")
+            raise ConfigurationError(
+                "allowed_anomaly_types",
+                self.allowed_anomaly_types,
+                f"Must be in {ANOMALY_TYPES}!",
+            )
 
 
 class DataGenerationPlottingSection(ConfigSection):
@@ -445,6 +574,7 @@ class DataGenerationPlottingSection(ConfigSection):
     injected_anomaly :
         Plot the injected anomaly for every generated training time series.
     """
+
     autoperiod: bool = False
     profile_area: bool = False
     subsequence_sampling: bool = False
@@ -521,7 +651,12 @@ class OptimizationSection(ConfigSection):
         Disable the optimization process and instead use the default parameters for each algorithm. This still uses
         Optuna to compute the results on the training data. This is required to determine the proxy metrics for the
         algorithm ranking process.
+    init_parameter_set :
+        Initial parameter set to start the optimization process. If the optimization is disabled via ``disabled=True``,
+        this is the only hyperparameter configuration used for the algorithm ranking process. Must be one of 'all',
+        'default', 'bad-default', or 'timeeval'. If ``disabled=False``, must be 'all'.
     """
+
     optuna_storage_type: str = "postgres"
     optuna_storage_cleanup: bool = False
     optuna_dashboard: bool = False
@@ -539,20 +674,23 @@ class OptimizationSection(ConfigSection):
 
     proxy_allowed_quality_deviation: float = 0.01
 
-    algorithms: FrozenSet[str] = frozenset({
-        "subsequence_lof",
-        "subsequence_knn",
-        "subsequence_if",
-        "stomp",
-        "kmeans",
-        "grammarviz",
-        "dwt_mlead",
-        "torsk",
-    })
+    algorithms: FrozenSet[str] = frozenset(
+        {
+            "subsequence_lof",
+            "subsequence_knn",
+            "subsequence_if",
+            "stomp",
+            "kmeans",
+            "grammarviz",
+            "dwt_mlead",
+            "torsk",
+        }
+    )
 
     reintroduce_default_params: bool = True
 
     disabled: bool = False
+    init_parameter_set: str = "all"
 
     def metric(self) -> Metric:
         return METRIC_MAPPING[self.metric_name]
@@ -569,31 +707,67 @@ class OptimizationSection(ConfigSection):
     @validate
     def validate_options(self) -> None:
         if self.optuna_storage_type not in {"sqlite", "postgres", "journal"}:
-            raise ConfigurationError("optuna_storage_type", self.optuna_storage_type,
-                                     "Must be one of 'sqlite', 'postgres', 'journal'!")
+            raise ConfigurationError(
+                "optuna_storage_type",
+                self.optuna_storage_type,
+                "Must be one of 'sqlite', 'postgres', 'journal'!",
+            )
         if self.max_trails_per_study < 1:
-            raise ConfigurationError("max_trails_per_study", self.max_trails_per_study,
-                                     "Must be at least 1!")
+            raise ConfigurationError(
+                "max_trails_per_study", self.max_trails_per_study, "Must be at least 1!"
+            )
         if self.n_trials_sensitivity > self.max_trails_per_study:
-            raise ConfigurationError("n_trials_sensitivity", self.n_trials_sensitivity,
-                                     "Must be less than or equal to max_trails_per_study!")
+            raise ConfigurationError(
+                "n_trials_sensitivity",
+                self.n_trials_sensitivity,
+                "Must be less than or equal to max_trails_per_study!",
+            )
         if self.n_trials_step > self.max_trails_per_study:
-            raise ConfigurationError("n_trials_step", self.n_trials_step,
-                                     "Must be less than or equal to max_trails_per_study!")
+            raise ConfigurationError(
+                "n_trials_step",
+                self.n_trials_step,
+                "Must be less than or equal to max_trails_per_study!",
+            )
         if self.metric_name not in METRIC_MAPPING:
-            raise ConfigurationError("metric_name", self.metric_name, f"Must be one of {METRIC_MAPPING.keys()}!")
+            raise ConfigurationError(
+                "metric_name",
+                self.metric_name,
+                f"Must be one of {METRIC_MAPPING.keys()}!",
+            )
         if not (0 < self.stop_heuristic_quality_threshold < 1):
-            raise ConfigurationError("stop_heuristic_quality_threshold", self.stop_heuristic_quality_threshold,
-                                     "Must be in (0, 1)!")
+            raise ConfigurationError(
+                "stop_heuristic_quality_threshold",
+                self.stop_heuristic_quality_threshold,
+                "Must be in (0, 1)!",
+            )
         if self.stop_heuristic_n > self.max_trails_per_study:
-            raise ConfigurationError("stop_heuristic_n", self.stop_heuristic_n,
-                                     "Must be less than or equal to max_trails_per_study!")
+            raise ConfigurationError(
+                "stop_heuristic_n",
+                self.stop_heuristic_n,
+                "Must be less than or equal to max_trails_per_study!",
+            )
         if self.proxy_allowed_quality_deviation < 0:
-            raise ConfigurationError("proxy_allowed_quality_deviation", self.proxy_allowed_quality_deviation,
-                                     "Must be greater than or equal to 0.")
+            raise ConfigurationError(
+                "proxy_allowed_quality_deviation",
+                self.proxy_allowed_quality_deviation,
+                "Must be greater than or equal to 0.",
+            )
         if not self.algorithms.issubset(ALGORITHMS):
-            raise ConfigurationError("algorithms", self.algorithms,
-                                     f"Must be a subset of {ALGORITHMS}!")
+            raise ConfigurationError(
+                "algorithms", self.algorithms, f"Must be a subset of {ALGORITHMS}!"
+            )
+        if self.init_parameter_set not in {"all", "default", "bad-default", "timeeval"}:
+            raise ConfigurationError(
+                "init_parameter_set",
+                self.init_parameter_set,
+                "Must be one of 'all', 'default', 'bad-default', 'timeeval'!",
+            )
+        if not self.disabled and self.init_parameter_set != "all":
+            raise ConfigurationError(
+                "init_parameter_set",
+                self.init_parameter_set,
+                "Must be 'all' if optimization is enabled!",
+            )
 
 
 class DatasetConsolidationSection(ConfigSection):
@@ -620,6 +794,7 @@ class DatasetConsolidationSection(ConfigSection):
     plot :
         Plot the dataset consolidation graph for each algorithm.
     """
+
     param_selection_strategy: str = "threshold"
     param_selection_best_quality_epsilon: float = 0.001
     param_selection_quality_threshold: float = 0.95
@@ -630,24 +805,44 @@ class DatasetConsolidationSection(ConfigSection):
     @validate
     def validate_options(self) -> None:
         if self.param_selection_strategy not in ("best", "threshold"):
-            raise ConfigurationError("param_selection_strategy", self.param_selection_strategy,
-                                     "Must be one of 'best', or 'threshold'!")
-        if self.param_selection_strategy == "best" and not (0 < self.param_selection_best_quality_epsilon < 1):
-            raise ConfigurationError("param_selection_best_quality_epsilon", self.param_selection_best_quality_epsilon,
-                                     "Must be in (0, 1)!")
-        if self.param_selection_strategy == "threshold" and not (0 < self.param_selection_quality_threshold < 1):
-            raise ConfigurationError("param_selection_quality_threshold", self.param_selection_quality_threshold,
-                                     "Must be in (0, 1)!")
+            raise ConfigurationError(
+                "param_selection_strategy",
+                self.param_selection_strategy,
+                "Must be one of 'best', or 'threshold'!",
+            )
+        if self.param_selection_strategy == "best" and not (
+            0 < self.param_selection_best_quality_epsilon < 1
+        ):
+            raise ConfigurationError(
+                "param_selection_best_quality_epsilon",
+                self.param_selection_best_quality_epsilon,
+                "Must be in (0, 1)!",
+            )
+        if self.param_selection_strategy == "threshold" and not (
+            0 < self.param_selection_quality_threshold < 1
+        ):
+            raise ConfigurationError(
+                "param_selection_quality_threshold",
+                self.param_selection_quality_threshold,
+                "Must be in (0, 1)!",
+            )
         if not (0 < self.dataset_similarity_threshold < 1):
-            raise ConfigurationError("dataset_similarity_threshold", self.dataset_similarity_threshold,
-                                     "Must be in (0, 1)!")
+            raise ConfigurationError(
+                "dataset_similarity_threshold",
+                self.dataset_similarity_threshold,
+                "Must be in (0, 1)!",
+            )
         if self.dataset_selection_strategy not in ("best", "fastest", "worst"):
-            raise ConfigurationError("dataset_selection_strategy", self.dataset_selection_strategy,
-                                     "Must be one of 'best', 'fastest', 'worst'!")
+            raise ConfigurationError(
+                "dataset_selection_strategy",
+                self.dataset_selection_strategy,
+                "Must be one of 'best', 'fastest', 'worst'!",
+            )
 
 
 class AutoTSADConfig(Config):
     """Configuration of the AutoTSAD system."""
+
     general: GeneralSection
     data_gen: DataGenerationSection
     data_gen_plotting: DataGenerationPlottingSection
@@ -657,6 +852,7 @@ class AutoTSADConfig(Config):
 
     def to_json(self) -> str:
         """Convert the current configuration options of AutoTSAD to a JSON string."""
+
         def _get_annotations(obj: Any) -> List[str]:
             return list(getattr(obj, "__annotations__", {}).keys())
 
@@ -673,7 +869,9 @@ class AutoTSADConfig(Config):
         dd = {}
         for section_name in _get_annotations(self):
             section = getattr(self, section_name)
-            dd[section_name] = dict([(e, _sanitize_entry(section, e)) for e in _get_annotations(section)])
+            dd[section_name] = dict(
+                [(e, _sanitize_entry(section, e)) for e in _get_annotations(section)]
+            )
 
         return json.dumps(dd)
 

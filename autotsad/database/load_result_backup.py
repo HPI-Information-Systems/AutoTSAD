@@ -26,6 +26,7 @@ CONFIG_FILEPATH_ALT2 = "autotsad-exp-config.yaml"
 VERSION_FILEPATH = "version.txt"
 EXECUTION_RESULTS_FILEPATH = "execution-results.csv"
 METRIC_FILEPATH = "metrics.csv"
+CLEANING_METRICS_FILEPATH = "cleaning-metrics.json"
 RUNTIME_FILEPATH = "runtimes.csv"
 CACHE_FOLDERPATH = "tmp/cache"
 SCORING_FOLDERPATH = "scores"
@@ -137,6 +138,17 @@ def _load_metrics(tmpdir: Path) -> pd.DataFrame:
     return df
 
 
+def _load_cleaning_metrics(tmpdir: Path) -> List[Dict[str, Any]]:
+    print("  loading cleaning metrics")
+    metrics_path = tmpdir / CLEANING_METRICS_FILEPATH
+    if not metrics_path.exists():
+        return []
+
+    with metrics_path.open("r") as fh:
+        metrics = json.load(fh)
+    return metrics
+
+
 def _calculate_runtime(tmpdir: Path) -> Optional[int]:
     path = tmpdir
 
@@ -237,6 +249,28 @@ def _process_scoring(scoring_id: str, dataset: str, algorithm: str, hyper_params
     t2 = time.time_ns()
     print(f"    ... {dataset}-{algorithm}-{hyper_params_id} done (local {(t1 - t0) / 1e9:.2f}s, "
           f"DB {(t2 - t1) / 1e9:.2f}s)")
+
+
+def _process_cleaning_metrics(db: Database, tmpdir: Path, experiment_id: int, dataset_id: str) -> None:
+    print("Processing AutoTSAD cleaning metrics...")
+    metrics = _load_cleaning_metrics(tmpdir)
+    if len(metrics) == 0:
+        print("...no cleaning metrics found!")
+        return
+
+    with db.begin() as conn:
+        res = conn.execute(delete(db.cleaning_metrics_table).where(
+            db.cleaning_metrics_table.c.experiment_id == experiment_id
+        ))
+        if res.rowcount != 0:
+            print(f"  deleted {res.rowcount} existing cleaning metrics entries")
+
+        for entry in metrics:
+            entry["experiment_id"] = experiment_id
+            entry["dataset_id"] = dataset_id
+            conn.execute(insert(db.cleaning_metrics_table).values(entry))
+        print(f"  uploaded {len(metrics)} new cleaning metrics entries")
+    print("...done processing cleaning metrics.")
 
 
 def _upload_ranking_results(db: Database, experiment_id: int, algorithm_scoring_ids: np.ndarray, entry: Dict[str, Any],
@@ -400,6 +434,9 @@ def load_result_backup(db: Database,
         print(f"...loaded {results.shape[0]} results, processing ...")
 
         dataset_id = results["dataset_id"].unique().item()
+
+        # process cleaning metrics
+        _process_cleaning_metrics(db, tmpdir, experiment_id, dataset_id)
 
         # upload scorings
         df_algorithm_scoring = results[["dataset_id", "algorithm"]].copy()

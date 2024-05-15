@@ -22,10 +22,10 @@ datasets=(
   "KDD-TSAD/174_UCR_Anomaly_insectEPG2"
   "KDD-TSAD/202_UCR_Anomaly_CHARISfive"
   "KDD-TSAD/208_UCR_Anomaly_CHARISten"
-  "MGAB/2"
   "MGAB/3"
-  "MGAB/4"
   "MGAB/6"
+  "MGAB/2"
+  "MGAB/4"
   "NAB/art_increase_spike_density"
   "NAB/ec2_network_in_257a54"
   "NAB/Twitter_volume_AMZN"
@@ -58,10 +58,10 @@ datasets=(
   "NASA-SMAP/A-1"
   "NormA/Discords_annsgun"
   "NormA/Discords_dutch_power_demand"
-  "NormA/Discords_marotta_valve_tek_14"
-  "NormA/Discords_marotta_valve_tek_17"
   "NormA/SinusRW_Length_106000_AnomalyL_100_AnomalyN_60_NoisePerc_0"
+  "NormA/Discords_marotta_valve_tek_14"
   "NormA/SinusRW_Length_104000_AnomalyL_200_AnomalyN_20_NoisePerc_0"
+  "NormA/Discords_marotta_valve_tek_17"
   "NormA/SinusRW_Length_108000_AnomalyL_200_AnomalyN_40_NoisePerc_0"
   "TSB-UAD-artificial/-37_2_0.02_25"
   "TSB-UAD-artificial/-69_2_0.02_15"
@@ -203,34 +203,38 @@ synthetic_datasets=(
 
 n_jobs=1
 
+jobid=1
 for d in "${datasets[@]}"; do
-  echo "Submitting Job >SELECT ${d} p=${n_jobs}<"
-  sbatch -J "SELECT ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy vertical "${HOME}/data/benchmark-data/univariate/${d}.test.csv"
-  sleep 0.5
-  sbatch -J "SELECT ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy horizontal "${HOME}/data/benchmark-data/univariate/${d}.test.csv"
+  echo "Submitting Job >CAE-Ensemble ${d} p=1<"
+  d_jobid="${jobid}"
+  jobid=$(sbatch --parsable -J "CAE-Ensemble ${d//\// } p=1" -d "afterany:${d_jobid}" slurm-run-cae-ensemble.sh --n-jobs "${n_jobs}" "${HOME}/data/benchmark-data/univariate/${d}.test.csv")
+  echo "Submitted job ${jobid} with dependency on ${d_jobid}"
   sleep 0.5
 done
 
+jobid=1
 for d in "${gutentag_datasets[@]}"; do
-  echo "Submitting Job >SELECT ${d} p=${n_jobs}<"
-  sbatch -J "SELECT GutenTAG ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy vertical "${HOME}/data/univariate-anomaly-test-cases/${d}/test.csv"
-  sleep 0.5
-  sbatch -J "SELECT GutenTAG ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy horizontal "${HOME}/data/univariate-anomaly-test-cases/${d}/test.csv"
+  echo "Submitting Job >CAE-Ensemble ${d} p=1<"
+  d_jobid="${jobid}"
+  jobid=$(sbatch --parsable -J "CAE-Ensemble GutenTAG ${d//\// } p=1" -d "afterany:${d_jobid}" slurm-run-cae-ensemble.sh --n-jobs "${n_jobs}" "${HOME}/data/univariate-anomaly-test-cases/${d}/test.csv")
+  echo "Submitted job ${jobid} with dependency on ${d_jobid}"
   sleep 0.5
 done
 
+jobid=1
 for d in "${sand_datasets[@]}"; do
-  echo "Submitting Job >SELECT ${d} p=${n_jobs}<"
-  sbatch -J "SELECT SAND ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy vertical "${HOME}/data/sand-data/${d}.csv"
-  sleep 0.5
-  sbatch -J "SELECT SAND ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy horizontal "${HOME}/data/sand-data/${d}.csv"
+  echo "Submitting Job >CAE-Ensemble ${d} p=1<"
+  d_jobid="${jobid}"
+  jobid=$(sbatch --parsable -J "CAE-Ensemble SAND ${d//\// } p=1" -d "afterany:${d_jobid}" slurm-run-cae-ensemble.sh --n-jobs "${n_jobs}" "${HOME}/data/sand-data/${d}.csv")
+  echo "Submitted job ${jobid} with dependency on ${d_jobid}"
   sleep 0.5
 done
 
+# jobid=1
 # for d in "${synthetic_datasets[@]}"; do
-#   echo "Submitting Job >SELECT ${d}<"
-#   sbatch -J "SELECT ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy vertical "${HOME}/data/autotsad-data/synthetic/${d}.csv"
-#   sleep 0.5
-#   sbatch -J "SELECT ${d//\// } p=${n_jobs}" slurm-run-select.sh --n-jobs "${n_jobs}" --strategy horizontal "${HOME}/data/autotsad-data/synthetic/${d}.csv"
+#   echo "Submitting Job >CAE-Ensemble ${d}<"
+#   d_jobid="${jobid}"
+#   jobid=$(sbatch --parsable -J "CAE-Ensemble ${d//\// } p=1" -d "afterany:${d_jobid}" slurm-run-cae-ensemble.sh --n-jobs "${n_jobs}" "${HOME}/data/autotsad-data/synthetic/${d}.csv")
+#   echo "Submitted job ${jobid} with dependency on ${d_jobid}"
 #   sleep 0.5
 # done

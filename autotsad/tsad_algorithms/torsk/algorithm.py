@@ -79,6 +79,22 @@ class CustomParameters:
             transient_window_size=20
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            context_window_size=10,
+            density=1,
+            imed_loss=False,
+            input_map_scale=0.01,
+            input_map_size=10,
+            train_window_size=2,
+            prediction_window_size=1,
+            transient_window_size=1,
+            spectral_radius=0.5,
+            scoring_large_window_size=50,
+            scoring_small_window_size=10,
+        )
+
 
 class AlgorithmArgs(argparse.Namespace):
     @staticmethod

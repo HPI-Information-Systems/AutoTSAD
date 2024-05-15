@@ -14,7 +14,7 @@ scipy>=1.10
 nx-config==0.2.0b5
 # pynisher>=1.0.5
 pynisher @ git+https://github.com/CodeLionX/pynisher.git@feat/rss#egg=pynisher
-periodicity-detection>=0.1.1
+periodicity-detection>=0.1.2
 durations>=0.3.3
 tqdm>=4.64
 docker==6.1.1
@@ -50,4 +50,4 @@ notebook>=6.5
 seaborn>=0.12
 
 # for streamlit app
-streamlit==1.24.0
+streamlit>=1.34.0

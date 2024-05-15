@@ -51,6 +51,17 @@ class CustomParameters:
             radius=1.0
         )
 
+    @staticmethod
+    def default() -> CustomParameters:
+        return CustomParameters(
+            window_size=10,
+            n_neighbors=1,
+            leaf_size=10,
+            distance_metric_order=1,
+            method="mean",
+            radius=3.0
+        )
+
 
 def main(data: np.ndarray,
          params: CustomParameters = CustomParameters(),

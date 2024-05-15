@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-conn = st.experimental_connection("autotsad", type=AutoTSADConnection)
+conn = st.connection("autotsad", type=AutoTSADConnection)
 
 st.write("# Dataset Explorer")
 datasets = conn.list_datasets().sort_values(["collection", "name"])

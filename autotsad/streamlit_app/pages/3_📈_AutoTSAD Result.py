@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide",
 )
 
-conn = st.experimental_connection("autotsad", type=AutoTSADConnection)
+conn = st.connection("autotsad", type=AutoTSADConnection)
 
 st.write("# AutoTSAD Results")
 
@@ -38,10 +38,11 @@ if dataset == "":
     st.error("No executions found. Please select a dataset.")
     st.stop()
 
-df_exec = conn.query(f"""select e.id, e.experiment_id, e.autotsad_version, e.config_id, e.ranking_method,
-        e.normalization_method, e.aggregation_method, e.range_pr_auc as "Range-PR-AUC", e.runtime
-    from autotsad_execution e, dataset d
+df_exec = conn.query(f"""select e.id, e.autotsad_version, c.description as "config", e.ranking_method,
+        e.normalization_method, e.aggregation_method, e.range_pr_auc as "Range-PR-AUC", e.runtime, e.experiment_id
+    from autotsad_execution e, dataset d, configuration c
     where e.dataset_id = d.hexhash
+        and e.config_id = c.id
         and d.name = '{dataset}'
         and e.ranking_method = '{ranking_method}'
         and e.normalization_method = '{normalization_method}'
@@ -57,7 +58,9 @@ elif df_exec.shape[0] > 1:
     col1, col2 = st.columns(2)
     col1.write("Available executions:")
     col1.write(df_exec)
-    execution_id = col2.selectbox("Select execution", df_exec["id"].tolist())
+    df_tmp = df_exec.set_index("id")
+    execution_id = col2.selectbox("Select execution", df_tmp.index,
+                                  format_func=lambda i: f"{i} - {df_tmp.loc[i, 'autotsad_version']} {df_tmp.loc[i, 'config'][:25]}...")
     df_exec = df_exec[df_exec["id"] == execution_id]
 
 execution = df_exec.iloc[0, :]

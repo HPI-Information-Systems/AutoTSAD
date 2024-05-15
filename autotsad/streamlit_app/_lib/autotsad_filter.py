@@ -17,7 +17,7 @@ ALGORITHM_SELECTION_METHODS = sorted(
     ] + ["aggregated-minimum-influence", "aggregated-robust-borda"]
 )
 SCORE_NORMALIZATION_METHODS = AUTOTSAD_SCORE_NORMALIZATION_METHODS
-SCORE_AGGREGATION_METHODS = [m for m in AUTOTSAD_SCORE_AGGREGATION_METHODS if m != "mean"]
+SCORE_AGGREGATION_METHODS = AUTOTSAD_SCORE_AGGREGATION_METHODS
 
 
 def create_autotsad_filters(key: str, conn: AutoTSADConnection, use_columns: bool = True) -> Dict[str, List[Any]]:

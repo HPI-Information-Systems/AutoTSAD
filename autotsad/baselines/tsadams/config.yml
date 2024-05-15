@@ -1,11 +1,11 @@
 # General parameters
 random_seed: 13
 n_jobs: 1
-overwrite: False
+overwrite: True
 verbose: True
 
 # Model training parameters
-downsampling: 10
+downsampling: !!null
 trained_model_path: './results/tsadams/trained_models'
 dataset_path: './data/autotsad-data'
 min_length: 256

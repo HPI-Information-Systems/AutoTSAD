@@ -16,10 +16,9 @@ from ...config import config
 from ...dataset import TrainingDatasetCollection, BaseTSDataset, TrainDataset
 from ...util import mask_to_slices, invert_slices
 
-log = logging.getLogger("autotsad.data_gen.cleaning")
-
 
 def execute_algorithms(dataset_collection: TrainingDatasetCollection) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+    log = logging.getLogger("autotsad.data_gen.cleaning")
     Timers.start("exec_algos")
 
     # prepare algorithms
@@ -58,6 +57,7 @@ def execute_algorithms(dataset_collection: TrainingDatasetCollection) -> Tuple[D
 
 
 def anomaly_predictions(scores: np.ndarray, algos: np.ndarray, d: BaseTSDataset) -> np.ndarray:
+    log = logging.getLogger("autotsad.data_gen.cleaning")
     prediction_list = []
     # thresholds = []
     for s, name in zip(scores, algos):
@@ -94,11 +94,17 @@ def anomaly_predictions(scores: np.ndarray, algos: np.ndarray, d: BaseTSDataset)
 
         # HEURISTIC 2: periodic predictions --> increase threshold and try again
         distinct_values = np.unique(s)
+        if len(distinct_values) == 1:
+            log.warning(f"Only one distinct value in scoring of algo {name}, ignoring!")
+            prediction_list.append(np.ones_like(s, dtype=np.bool_))
+            # thresholds.append(distinct_values[0])
+            continue
+
         while np.ceil(
                 s.shape[0] / d.period_size * config.data_gen.ANOM_FILTER_PERIODIC_SCORING_PERCENTAGE
-        ) <= np.sum(np.diff(np.r_[0, predictions, 0]) == 1):
+        ) < np.sum(np.diff(np.r_[0, predictions, 0]) == 1):
             log.debug(f"{name} predicted too many regions to remove (threshold={threshold}) "
-                      f"--> looking for more relaxed threshold (next threshold {threshold}")
+                      f"--> looking for more relaxed threshold (next threshold {threshold})")
             current_threshold_idx = np.argmin(np.abs(distinct_values - threshold))
             threshold = distinct_values[min(current_threshold_idx + 1, distinct_values.shape[0])]
             predictions = s <= threshold
@@ -109,6 +115,7 @@ def anomaly_predictions(scores: np.ndarray, algos: np.ndarray, d: BaseTSDataset)
 
 
 def clean_base_timeseries(dataset_collection: TrainingDatasetCollection, use_gt: bool = False) -> TrainingDatasetCollection:
+    log = logging.getLogger("autotsad.data_gen.cleaning")
     algo_names_cache_path = config.general.cache_dir() / "dataset-algo-names.pkl"
     algo_scores_cache_path = config.general.cache_dir() / "dataset-algo-scores.pkl"
     Timers.start("Cleaning")
@@ -187,6 +194,10 @@ def clean_base_timeseries(dataset_collection: TrainingDatasetCollection, use_gt:
             vote_threshold = len(prediction_list) * config.data_gen.anom_filter_voting_threshold
             cutout = votes < vote_threshold
             cut_slices = mask_to_slices(cutout)
+            log.debug(
+                f"{len(prediction_list)} of {len(algos)} algorithms voted with threshold {vote_threshold}: "
+                f"Cutting out {len(cut_slices)} regions."
+            )
 
         # add too small, kept subsequences to the anomaly cutouts
         inv_slices = invert_slices(cut_slices, first_last=(0, d.length))
