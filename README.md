@@ -71,6 +71,11 @@ The baseline algorithms are the following:
 - **tsadams**: Method selection technique for time series anomaly detection.
   We use the implementation from the original authors.
   Because the method requires semi-supervised forecasting algorithms, we cannot use it on our base algorithms and use the provided ones.
+- **cae-ensemble**: Heterogeneous ensembling technique using deep learning base components (convolutional autoencoders).
+  We use the implementation from the original authors and adapt it to our unsupervised use case:
+  - We use the test time series during training (without labels).
+  - We automatically execute the unsupervised hyperparameter selection process described in the paper with 10 randomly
+    sampled hyperparameter settings (to stay within our 12 h time limit for most datasets).
 
 For all baseline algorithms and AutoTSAD, we use the [manually-tuned hyperparameter heuristics from TimeEval](https://github.com/HPI-Information-Systems/TimeEval/blob/main/timeeval_experiments/param-config.json).
 
