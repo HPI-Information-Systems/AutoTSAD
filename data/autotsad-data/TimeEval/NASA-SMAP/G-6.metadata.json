@@ -1,0 +1,108 @@
+[
+  {
+    "anomaly_length": {
+      "max": 101,
+      "median": 101,
+      "min": 101
+    },
+    "contamination": 0.011689814814814814,
+    "dataset_id": [
+      "NASA-SMAP",
+      "G-6"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 8640,
+    "means": {
+      "value": 0.19116358671712824
+    },
+    "num_anomalies": 1,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "trend_stationary"
+    },
+    "stddevs": {
+      "value": 0.7803497175835489
+    },
+    "trends": {
+      "value": [
+        {
+          "coef": [
+            -0.0002261057603996933
+          ],
+          "confidence_r2": 0.5223254656868974,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            -2.8043761756316453e-08
+          ],
+          "confidence_r2": 0.6396647795409067,
+          "tpe": "quadratic"
+        },
+        {
+          "coef": [
+            -3.443811680300692e-12
+          ],
+          "confidence_r2": 0.6508801748194966,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  },
+  {
+    "anomaly_length": {
+      "max": 0,
+      "median": 0,
+      "min": 0
+    },
+    "contamination": 0.0,
+    "dataset_id": [
+      "NASA-SMAP",
+      "G-6"
+    ],
+    "dimensions": 1,
+    "is_train": true,
+    "length": 2881,
+    "means": {
+      "value": 0.00034265084192452435
+    },
+    "num_anomalies": 0,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "trend_stationary"
+    },
+    "stddevs": {
+      "value": 0.5778557397788044
+    },
+    "trends": {
+      "value": [
+        {
+          "coef": [
+            0.0006946906138799705
+          ],
+          "confidence_r2": 0.9999999722992019,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            2.2612118731411736e-07
+          ],
+          "confidence_r2": 0.9374156045953759,
+          "tpe": "quadratic"
+        },
+        {
+          "coef": [
+            7.815208641620032e-11
+          ],
+          "confidence_r2": 0.8398620224541223,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  }
+]

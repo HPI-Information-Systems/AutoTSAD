@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 1499,
+      "median": 1499,
+      "min": 1499
+    },
+    "contamination": 0.08304709141274239,
+    "dataset_id": [
+      "NAB",
+      "cpu_utilization_asg_misconfiguration"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 18050,
+    "means": {
+      "value": 38.2827560498615
+    },
+    "num_anomalies": 1,
+    "periods": {
+      "value": 12
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 15.639293830231871
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 100,
+      "median": 40,
+      "min": 40
+    },
+    "contamination": 0.02247249732159189,
+    "dataset_id": [
+      "TSB-UAD",
+      "KDD21_flat_region_0.02-104_UCR_Anomaly_NOISEapneaecg4_6000_16000_16100"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 38269,
+    "means": {
+      "value": -1.5322444901474377
+    },
+    "num_anomalies": 20,
+    "periods": {
+      "value": 48
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 75.1720867148785
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

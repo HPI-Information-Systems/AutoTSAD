@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 567,
+      "median": 567,
+      "min": 567
+    },
+    "contamination": 0.09993390614672835,
+    "dataset_id": [
+      "NAB",
+      "machine_temperature_system_failure"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 22695,
+    "means": {
+      "value": 85.92649821068021
+    },
+    "num_anomalies": 4,
+    "periods": {
+      "value": 8
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 13.746912473090102
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

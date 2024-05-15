@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 125,
+      "median": 125,
+      "min": 125
+    },
+    "contamination": 0.1,
+    "dataset_id": [
+      "NAB",
+      "occupancy_t4013"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 2500,
+    "means": {
+      "value": 7.24264
+    },
+    "num_anomalies": 2,
+    "periods": {
+      "value": 6
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 4.372321441558857
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

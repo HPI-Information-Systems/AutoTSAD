@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 24,
+      "median": 24,
+      "min": 1
+    },
+    "contamination": 0.07261904761904762,
+    "dataset_id": [
+      "TSB-UAD",
+      "YAHOO_flip_segment_0.08-YahooA4Benchmark-TS55_data"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 1680,
+    "means": {
+      "value": 730.2919693824985
+    },
+    "num_anomalies": 7,
+    "periods": {
+      "value": 12
+    },
+    "stationarities": {
+      "value": "trend_stationary"
+    },
+    "stddevs": {
+      "value": 489.68510823717014
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

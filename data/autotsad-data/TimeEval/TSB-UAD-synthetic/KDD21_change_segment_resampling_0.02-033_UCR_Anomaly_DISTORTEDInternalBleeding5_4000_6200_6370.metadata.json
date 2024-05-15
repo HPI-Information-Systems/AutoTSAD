@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 170,
+      "median": 170,
+      "min": 170
+    },
+    "contamination": 0.022926500337154418,
+    "dataset_id": [
+      "TSB-UAD",
+      "KDD21_change_segment_resampling_0.02-033_UCR_Anomaly_DISTORTEDInternalBleeding5_4000_6200_6370"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 7415,
+    "means": {
+      "value": 53.92767408118674
+    },
+    "num_anomalies": 1,
+    "periods": {
+      "value": 143
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 10.005119340406674
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

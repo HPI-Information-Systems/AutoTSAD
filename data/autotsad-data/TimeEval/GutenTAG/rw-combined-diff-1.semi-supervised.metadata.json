@@ -1,0 +1,95 @@
+[
+  {
+    "anomaly_length": {
+      "max": 100,
+      "median": 100,
+      "min": 100
+    },
+    "contamination": 0.06,
+    "dataset_id": [
+      "univariate-anomaly-test-cases",
+      "rw-combined-diff-1.semi-supervised"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 10000,
+    "means": {
+      "value-0": -2.0549278557763246
+    },
+    "num_anomalies": 6,
+    "stationarities": {
+      "value-0": "trend_stationary"
+    },
+    "stddevs": {
+      "value-0": 1.409257216595469
+    },
+    "trends": {
+      "value-0": [
+        {
+          "coef": [
+            -0.0004103598532857394
+          ],
+          "confidence_r2": 0.7066614139773977,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            -3.636442679530391e-08
+          ],
+          "confidence_r2": 0.5918101748314957,
+          "tpe": "quadratic"
+        }
+      ]
+    }
+  },
+  {
+    "anomaly_length": {
+      "max": 0,
+      "median": 0,
+      "min": 0
+    },
+    "contamination": 0.0,
+    "dataset_id": [
+      "univariate-anomaly-test-cases",
+      "rw-combined-diff-1.semi-supervised"
+    ],
+    "dimensions": 1,
+    "is_train": true,
+    "length": 10000,
+    "means": {
+      "value-0": -1.8567058127529668
+    },
+    "num_anomalies": 0,
+    "stationarities": {
+      "value-0": "stationary"
+    },
+    "stddevs": {
+      "value-0": 1.4976967107790837
+    },
+    "trends": {
+      "value-0": [
+        {
+          "coef": [
+            -0.00042248369408911385
+          ],
+          "confidence_r2": 0.6631844475411941,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            -4.5072111513239227e-08
+          ],
+          "confidence_r2": 0.8049659798453608,
+          "tpe": "quadratic"
+        },
+        {
+          "coef": [
+            -4.753469967963589e-12
+          ],
+          "confidence_r2": 0.8092944221140571,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  }
+]

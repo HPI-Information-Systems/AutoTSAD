@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 25,
+      "median": 13,
+      "min": 2
+    },
+    "contamination": 0.018763029881862403,
+    "dataset_id": [
+      "TSB-UAD",
+      "YAHOO_flat_region_0.02-Yahoo_A1real_14_data"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 1439,
+    "means": {
+      "value": 843.6914523974982
+    },
+    "num_anomalies": 2,
+    "periods": {
+      "value": 25
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 711.4105075801558
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

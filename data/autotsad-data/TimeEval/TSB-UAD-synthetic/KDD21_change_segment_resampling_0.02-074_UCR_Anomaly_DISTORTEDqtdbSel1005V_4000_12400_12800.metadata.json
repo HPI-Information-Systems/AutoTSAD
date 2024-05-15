@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 564,
+      "median": 564,
+      "min": 400
+    },
+    "contamination": 0.05634409760564518,
+    "dataset_id": [
+      "TSB-UAD",
+      "KDD21_change_segment_resampling_0.02-074_UCR_Anomaly_DISTORTEDqtdbSel1005V_4000_12400_12800"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 37129,
+    "means": {
+      "value": -43.52758106170898
+    },
+    "num_anomalies": 4,
+    "periods": {
+      "value": 40
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 25.269230083447013
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

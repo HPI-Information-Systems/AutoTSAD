@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 135,
+      "median": 135,
+      "min": 76
+    },
+    "contamination": 0.08581349206349206,
+    "dataset_id": [
+      "NAB",
+      "ec2_request_latency_system_failure"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 4032,
+    "means": {
+      "value": 45.155873511904765
+    },
+    "num_anomalies": 3,
+    "periods": {
+      "value": 3
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 2.287089421774545
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

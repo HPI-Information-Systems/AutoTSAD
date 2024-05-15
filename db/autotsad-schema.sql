@@ -335,4 +335,23 @@ create table if not exists runtime_trace
 
 alter table runtime_trace
     owner to autotsad;
+
+-- table for cleaning metrics
+create table if not exists cleaning_metrics
+(
+    experiment_id integer
+        constraint cleaning_metrics_experiment_id_fk
+            references experiment
+            on update cascade on delete cascade,
+    dataset_id    varchar not null
+        constraint cleaning_metrics_dataset_id_fk
+            references dataset
+            on update cascade on delete restrict,
+    precision     double precision,
+    recall        double precision,
+    f1            double precision,
+    f10           double precision
+);
+alter table cleaning_metrics
+    owner to autotsad;
 ---------------------------------------

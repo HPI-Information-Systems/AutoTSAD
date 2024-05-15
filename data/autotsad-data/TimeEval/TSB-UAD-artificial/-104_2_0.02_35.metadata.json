@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 15,
+      "median": 15,
+      "min": 15
+    },
+    "contamination": 0.0196078431372549,
+    "dataset_id": [
+      "TSB-UAD",
+      "-104_2_0.02_35"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 1530,
+    "means": {
+      "value": 9.185620915068243e-07
+    },
+    "num_anomalies": 2,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 0.9664049227872452
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

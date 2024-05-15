@@ -1,0 +1,64 @@
+[
+  {
+    "anomaly_length": {
+      "max": 201,
+      "median": 121,
+      "min": 101
+    },
+    "contamination": 0.08369608231104075,
+    "dataset_id": [
+      "NASA-MSL",
+      "F-7"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 5054,
+    "means": {
+      "value": -0.5533947651082592
+    },
+    "num_anomalies": 3,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 0.6585736508159183
+    },
+    "trends": {
+      "value": []
+    }
+  },
+  {
+    "anomaly_length": {
+      "max": 0,
+      "median": 0,
+      "min": 0
+    },
+    "contamination": 0.0,
+    "dataset_id": [
+      "NASA-MSL",
+      "F-7"
+    ],
+    "dimensions": 1,
+    "is_train": true,
+    "length": 2511,
+    "means": {
+      "value": -0.6086789554531489
+    },
+    "num_anomalies": 0,
+    "periods": {
+      "value": 1
+    },
+    "stationarities": {
+      "value": "difference_stationary"
+    },
+    "stddevs": {
+      "value": 0.6106594711072405
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

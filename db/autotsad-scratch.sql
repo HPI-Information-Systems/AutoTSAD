@@ -58,13 +58,12 @@ select id, experiment_id from algorithm_scoring where experiment_id = 3;
 
 -- size and counts
 select
-    (select count(*) from scoring) as "scoring",
+    (select count(*) from algorithm_scoring) as "algorithm_scoring",
     (select count(*) from timeseries) as "timeseries"
 ;
 
 select
     pg_size_pretty(pg_total_relation_size('scoring')) as "scoring_table",
-    pg_size_pretty(pg_total_relation_size('aggregated_scoring_scores')) as "aggregated_scoring_table",
     pg_size_pretty(pg_total_relation_size('timeseries')) as "timeseries_table",
     pg_size_pretty(hypertable_size('timeseries')) as "timeseries_hypertable",
     pg_size_pretty(pg_database_size('akita')) as "database";
@@ -163,6 +162,7 @@ create temporary table "#window_sizes" as
       and s.algorithm not in ('k-Means', 'SAND')
       and not (s.hyper_params::jsonb @> '{}'::jsonb and '{}'::jsonb @> s.hyper_params::jsonb)
 ;
+explain
 select b.dataset,
        b.algorithm,
        b.window_size,
@@ -296,16 +296,18 @@ order by b.position
 
 select a.name as "dataset_name", a."n_jobs", t.trace_name, t.position, t.duration_ns / 1e9 as "runtime"
 from runtime_trace t,
-     (select distinct e.experiment_id, d.name, (c.config #>> '{general, n_jobs}')::integer as "n_jobs"
+     (select distinct e.experiment_id, d.name, (c.config #>> '{general, n_jobs}')::integer as "n_jobs", autotsad_version
       from experiment x, dataset d, configuration c, autotsad_execution e
       where e.dataset_id = d.hexhash
         and e.config_id = c.id
         and e.experiment_id = x.id
-        and x.description in ('paper v1 - quality', 'paper v1 - scaling')
+--         and x.description in ('paper v1 - quality', 'paper v1 - scaling')
         and c.description in
             ('paper v1', 'paper v1 - n_jobs=10', 'paper v1 - n_jobs=5', 'paper v1 - n_jobs=1',
              'paper v1 - n_jobs=40')
-        and d.name in ('-69_2_0.02_15', '022_UCR_Anomaly_DISTORTEDGP711MarkerLFM5z4')) a
+        and d.name in ('-69_2_0.02_15', '022_UCR_Anomaly_DISTORTEDGP711MarkerLFM5z4')
+        and e.autotsad_version = '0.2.1'
+        order by name, n_jobs) a
 where t.experiment_id = a.experiment_id
   and trace_name in ('autotsad-%-Base TS generation', 'autotsad-%-Cleaning', 'autotsad-%-Limiting',
                      'autotsad-%-Anomaly injection', 'autotsad-%-Optimization-%-Sensitivity analysis',
@@ -494,6 +496,7 @@ select *
 
 select concat(d.collection, ' ', d.name)                                                as "Dataset",
        concat(e.ranking_method, '_', e.normalization_method, '_', e.aggregation_method) as "Method",
+       e.experiment_id,
        e.range_pr_auc,
        e.range_roc_auc
 from autotsad_execution e, dataset d
@@ -503,29 +506,6 @@ where e.dataset_id = d.hexhash
     and d.paper = True
     and d.name = 'KDD21_change_segment_resampling_0.02-006_UCR_Anomaly_DISTORTEDCIMIS44AirTemperature2_4000_5703_5727'
 order by concat(e.ranking_method, '_', e.normalization_method, '_', e.aggregation_method)
-;
-
-select algorithm_ranking_id, aggregated_scoring_id
-from autotsad_execution
-where ranking_method in ('aggregated-minimum-influence', 'aggregated-robust-borda')
-  and (aggregated_scoring_id is null or algorithm_ranking_id is null)
-;
-
-select c.id, c.description, e.ranking_method
-from configuration c left outer join (
-    select config_id, ranking_method
-    from autotsad_execution
-    where ranking_method in ('aggregated-minimum-influence', 'aggregated-robust-borda')
-) e on c.id = e.config_id
-where c.description like 'paper v1%' and e.ranking_method is null
-;
-
--- FIXME! those scoring are missing
-select d.name, b.*
-from baseline_execution b, dataset d
-where b.name = 'k-Means (TimeEval)'
-and b.algorithm_scoring_id is null
-and b.dataset_id = d.hexhash
 ;
 
 select d.name, s.*
@@ -543,3 +523,157 @@ order by s.algorithm, s.hyper_params_id
 ;
 
 select distinct description from experiment order by description;
+
+-- n_jobs scaling
+select a.name as "dataset_name", a."n_jobs", t.trace_name, t.position, t.duration_ns / 1e9 as "runtime"
+from runtime_trace t,
+     (select distinct e.experiment_id, d.name, (c.config #>> '{general, n_jobs}')::integer as "n_jobs", e.autotsad_version
+      from dataset d, configuration c, autotsad_execution e
+      where e.dataset_id = d.hexhash
+        and e.config_id = c.id
+        and c.description in
+--             ('paper v1', 'paper v1 - n_jobs=10', 'paper v1 - n_jobs=5', 'paper v1 - n_jobs=1', 'paper v1 - n_jobs=40')
+            ('paper v1 - no parallelism', 'paper v1 - default ensemble (no optimization, seed=1)')
+--         and e.autotsad_version = '0.2.1'
+        and e.autotsad_version = '0.2.2-timeeval'
+        and d.name in ('-69_2_0.02_15', '022_UCR_Anomaly_DISTORTEDGP711MarkerLFM5z4')) a
+where t.experiment_id = a.experiment_id
+  and trace_name in ('autotsad-%-Base TS generation', 'autotsad-%-Cleaning', 'autotsad-%-Limiting',
+                     'autotsad-%-Anomaly injection', 'autotsad-%-Optimization-%-Sensitivity analysis',
+                     'autotsad-%-Optimization-%-Hyperparams opt.',
+                     'autotsad-%-Optimization-%-Selecting best performers',
+                     'autotsad-%-Execution-%-Algorithm Execution',
+                     'autotsad-%-Execution-%-Computing all combinations')
+  and trace_type = 'END'
+order by a.name, a."n_jobs", t.position
+;
+
+select distinct c.id, c.description
+from autotsad_execution e, configuration c
+where e.config_id = c.id and autotsad_version = '0.2.1' and fscore is null
+;
+
+select distinct autotsad_version from autotsad_execution;
+
+select count(*), 'missing' as "type" from autotsad_execution where fscore is null
+union
+select count(*), 'filled' as "type" from autotsad_execution where fscore is not null
+union
+select count(*), 'all' as "type" from autotsad_execution
+order by "type";
+
+select autotsad_version, config_id, count(*) as "count"
+from autotsad_execution
+where fscore is null and autotsad_version in ('0.2.1', '0.2.2-timeeval', '0.2.2-bad')
+group by autotsad_version, config_id
+order by autotsad_version, count(*) desc
+;
+
+select e.name, count(*) as "count"
+from baseline_execution e, dataset d
+where e.fscore is null and e.algorithm_scoring_id is not null and e.dataset_id = d.hexhash and d.paper = True
+group by e.name
+order by e.name, count(*) desc
+;
+
+-- inspect data cleaning performance
+select avg(recall)                                           as "average recall",
+       percentile_cont(0.5) within group ( order by recall ) as "median recall",
+       count(*)                                              as "count",
+       avg(count)                                            as "per dataset"
+from (select *,
+             count(*) over (partition by dataset_id) as "count"
+      from (select c.experiment_id, c.dataset_id, a.autotsad_version, f.description, c.recall
+            from cleaning_metrics c,
+                 autotsad_execution a,
+                 configuration f
+            where c.experiment_id = a.experiment_id
+              and a.config_id = f.id
+              and a.autotsad_version in ('0.3.3')
+              and a.ranking_method = 'aggregated-minimum-influence'
+              and a.normalization_method = 'gaussian'
+              and a.aggregation_method = 'mean'
+              and f.description like 'paper v2 default%') a) b
+;
+
+-- compare autotsad with and without cleaning
+select t1.collection, t1.name, t1.range_pr_auc as "range_pr_auc_default", t2.range_pr_auc as "range_pr_auc_no_cleaning"
+from (
+select d.collection, d.name, e.autotsad_version, e.range_pr_auc
+    from autotsad_execution e, dataset d
+    where e.autotsad_version in ('0.3.1', '0.3.2', '0.3.3')
+      and e.config_id = '6bc6c763d6590b04ad3fac6c6a36990a'
+      and e.ranking_method = 'aggregated-minimum-influence'
+      and e.normalization_method = 'gaussian'
+      and e.aggregation_method = 'mean'
+        and e.dataset_id = d.hexhash
+        and d.paper = True
+    order by d.collection, d.name) t1, (
+select d.collection, d.name, e.autotsad_version, e.range_pr_auc
+    from autotsad_execution e, dataset d
+    where e.autotsad_version in ('0.3.1', '0.3.2', '0.3.3')
+      and e.config_id = 'a0cbfd1aad708898aa0278584ee7ad52'
+      and e.ranking_method = 'aggregated-minimum-influence'
+      and e.normalization_method = 'gaussian'
+      and e.aggregation_method = 'mean'
+        and e.dataset_id = d.hexhash
+        and d.paper = True
+    order by d.collection, d.name) t2
+where t1.collection = t2.collection and t1.name = t2.name
+    and t1.range_pr_auc > 0.8
+order by t1.range_pr_auc - t2.range_pr_auc desc
+;
+
+select *
+    from autotsad_execution
+    where config_id = 'c9752123170a08a3b3b8e1aeeae6c29e'
+;
+
+select d.collection, d.name, e.autotsad_version, e.range_pr_auc
+    from autotsad_execution e, dataset d
+    where e.autotsad_version in ('0.3.1', '0.3.2', '0.3.3')
+      and e.config_id = '6bc6c763d6590b04ad3fac6c6a36990a'
+      and e.ranking_method = 'aggregated-minimum-influence'
+      and e.normalization_method = 'gaussian'
+      and e.aggregation_method = 'mean'
+        and e.dataset_id = d.hexhash
+        and d.paper = True
+    order by e.range_pr_auc
+;
+select t1.collection, t1.name, t1.range_pr_auc as "range_pr_auc_default", t2.range_pr_auc as "range_pr_auc_mmq_ed"
+from (
+select d.collection, d.name, e.autotsad_version, e.range_pr_auc
+    from autotsad_execution e, dataset d
+    where e.autotsad_version in ('0.3.1', '0.3.2', '0.3.3')
+      and e.config_id = '6bc6c763d6590b04ad3fac6c6a36990a'
+      and e.ranking_method = 'aggregated-minimum-influence'
+      and e.normalization_method = 'gaussian'
+      and e.aggregation_method = 'mean'
+        and e.dataset_id = d.hexhash
+        and d.paper = True
+    order by d.collection, d.name) t1, (
+select d.collection, d.name, e.autotsad_version, e.range_pr_auc
+    from autotsad_execution e, dataset d
+    where e.autotsad_version in ('0.3.1', '0.3.2', '0.3.3')
+      and e.config_id = '6bc6c763d6590b04ad3fac6c6a36990a'
+      and e.ranking_method = 'mmq-euclidean'
+      and e.normalization_method = 'gaussian'
+      and e.aggregation_method = 'mean'
+        and e.dataset_id = d.hexhash
+        and d.paper = True
+    order by d.collection, d.name) t2
+where t1.collection = t2.collection and t1.name = t2.name
+    and t1.range_pr_auc < 0.7
+order by t1.range_pr_auc - t2.range_pr_auc
+;
+
+select d.hexhash, d.collection, d.name, b.name
+from (select *
+      from dataset
+      where paper = True and revision = False) d
+         left outer join (select *
+                          from baseline_execution
+                          where name = 'cae-ensemble') b
+             on d.hexhash = b.dataset_id
+order by d.collection, d.name
+;

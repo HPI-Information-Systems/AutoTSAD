@@ -1,0 +1,55 @@
+[
+  {
+    "anomaly_length": {
+      "max": 24,
+      "median": 24,
+      "min": 1
+    },
+    "contamination": 0.07380952380952381,
+    "dataset_id": [
+      "TSB-UAD",
+      "YAHOO_flat_region_0.08-YahooA4Benchmark-TS33_data"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 1680,
+    "means": {
+      "value": 782.5222081061272
+    },
+    "num_anomalies": 9,
+    "periods": {
+      "value": 12
+    },
+    "stationarities": {
+      "value": "trend_stationary"
+    },
+    "stddevs": {
+      "value": 552.7210945085228
+    },
+    "trends": {
+      "value": [
+        {
+          "coef": [
+            0.9699799860824827
+          ],
+          "confidence_r2": 0.7247850332265191,
+          "tpe": "linear"
+        },
+        {
+          "coef": [
+            0.0005650614746246156
+          ],
+          "confidence_r2": 0.7396691155904072,
+          "tpe": "quadratic"
+        },
+        {
+          "coef": [
+            3.437674210764133e-07
+          ],
+          "confidence_r2": 0.6979934722154584,
+          "tpe": "kubic"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 72,
+      "median": 72,
+      "min": 24
+    },
+    "contamination": 0.053824362606232294,
+    "dataset_id": [
+      "TSB-UAD",
+      "KDD21_change_segment_resampling_0.02-006_UCR_Anomaly_DISTORTEDCIMIS44AirTemperature2_4000_5703_5727"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 8472,
+    "means": {
+      "value": 15.263748772167112
+    },
+    "num_anomalies": 7,
+    "periods": {
+      "value": 24
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 5.649139767004213
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]

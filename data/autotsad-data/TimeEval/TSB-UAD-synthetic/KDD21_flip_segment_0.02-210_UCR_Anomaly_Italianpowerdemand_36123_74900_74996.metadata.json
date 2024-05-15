@@ -1,0 +1,33 @@
+[
+  {
+    "anomaly_length": {
+      "max": 96,
+      "median": 96,
+      "min": 96
+    },
+    "contamination": 0.020030212236790492,
+    "dataset_id": [
+      "TSB-UAD",
+      "KDD21_flip_segment_0.02-210_UCR_Anomaly_Italianpowerdemand_36123_74900_74996"
+    ],
+    "dimensions": 1,
+    "is_train": false,
+    "length": 119819,
+    "means": {
+      "value": 179.50512940354648
+    },
+    "num_anomalies": 25,
+    "periods": {
+      "value": 250
+    },
+    "stationarities": {
+      "value": "stationary"
+    },
+    "stddevs": {
+      "value": 45.65127280537586
+    },
+    "trends": {
+      "value": []
+    }
+  }
+]
