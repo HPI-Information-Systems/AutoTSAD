@@ -10,7 +10,8 @@ import scipy.stats as stats
 import _lib.preamble  # noqa: F401
 from _lib.plt_plotting import (  # noqa: F401
     plot_quality, plot_runtime_traces, plot_optimization_scaling, plot_optimization_improvement,  # noqa: F401
-    plot_ensembling_strategies, plot_ranking_comparison, plot_runtime_traces_new  # noqa: F401
+    plot_ensembling_strategies, plot_ranking_comparison, plot_runtime_traces_new,  # noqa: F401
+    plot_quality_by_collection  # noqa: F401
 )
 
 from autotsad.database.autotsad_connection import AutoTSADConnection, DB_METRIC_NAME_MAPPING
@@ -175,7 +176,7 @@ show_method_type = c2.checkbox("Show method type", value=True)
 if custom_method_order:
     method_order = [
         best_ensemble_method, best_ensemble_method.replace("_mean", "_max"), "select-horizontal",
-        "select-vertical", "best-algo", "top-1", "tsadams-mim", "k-Means (TimeEval)",
+        "cae-ensemble", "select-vertical", "best-algo", "top-1", "tsadams-mim", "k-Means (TimeEval)",
         # "SAND (TimeEval)",
     ]
 fig = plot_quality(df_quality, method_order,
@@ -205,12 +206,22 @@ if "SAND (TimeEval)" in df_table.columns:
     st.warning("Note: Unfortunately, SAND could not process many of the datasets.")
 st.warning(f"Note: We executed tsadams only on {tsadams_n_datasets} datasets, for which we have (normal) training data "
            "available because tsadams uses semi-supervised base algorithms.")
-st.warning(f"Note: We executed cae-ensemble only on 86 datasets because our compute infrastructure was down. "
-           "CAE-Ensemble exceeded the time limit for 13 of the datasets despite its GPU-usage and a limited "
+st.warning(f"Note: CAE-Ensemble exceeded the time limit for 26 of the datasets despite its GPU-usage and a limited "
            "hyperparameter search of only 10 settings.")
 
 st.write("Results on the individual datasets:")
 st.dataframe(df_table.style.background_gradient(cmap="inferno", low=0.0, high=1.0, vmin=0.0, vmax=1.0), use_container_width=True)
+
+st.write("Results grouped by collection:")
+c0, c1, c2, c3 = st.columns(4)
+gr_include_oracle = c0.checkbox("Include Oracle", value=False)
+gr_include_ensembles = c1.checkbox("Include Ensemble Baselines", value=True)
+gr_include_selection = c2.checkbox("Include Method Selection Baselines", value=False)
+gr_include_kmeans = c3.checkbox("Include k-Means", value=False)
+
+
+st.write(plot_quality_by_collection(df_quality, method_order, evaluation_metric, gr_include_oracle, gr_include_ensembles,
+                                    gr_include_selection, gr_include_kmeans))
 
 ###############################################################################
 # RUNTIME
