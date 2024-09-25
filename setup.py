@@ -83,5 +83,5 @@ if __name__ == "__main__":
         python_requires=">=3.8, <=3.11",
         cmdclass={"clean": CleanCommand},
         zip_safe=False,
-        entry_points={"console_scripts": ["autotsad=autotsad.__main__:main"]},
+        entry_points={"console_scripts": ["autotsad=autotsad.__main__:cli"]},
     )

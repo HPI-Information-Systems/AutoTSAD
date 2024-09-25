@@ -37,7 +37,7 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: List[str]) -> None:
     parser = create_parser()
     args = parser.parse_args(argv)
 
@@ -56,6 +56,10 @@ def main(argv: List[str]):
 
     else:
         raise ValueError(f"Unknown command '{args.command}' for AutoTSAD!")
+
+
+def cli() -> None:
+    main(sys.argv[1:])
 
 
 if __name__ == '__main__':
