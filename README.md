@@ -81,9 +81,6 @@ For all baseline algorithms and AutoTSAD, we use the [manually-tuned hyperparame
 
 ### Range-PR-AUC Metric
 
-> [!NOTE]
-> This figure already include the results on **all** datasets.
-
 We use the Range-PR-AUC metric as our main evaluation measure:
 
 ![Detection quality comparison using Range-PR-AUC metric](docs/figures/quality-range-pr-auc.png)
@@ -107,12 +104,11 @@ We use the Range-PR-AUC metric as our main evaluation measure:
   </div>
 </div>
 
-
 ## Installation
 
 ### Requirements
 
-- python >= 3.8
+- python >=3.8, <3.10
 - Java >= 1.8 (for GrammarViz)
 
 ### Installation from Source
